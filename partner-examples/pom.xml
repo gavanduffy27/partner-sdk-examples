@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<packaging>pom</packaging>
+	<groupId>com.genkey.dgie.examples</groupId>
+	<artifactId>partner-examples</artifactId>
+	<version>6.1.1-SNAPSHOT</version>
+	<name>partner-examples</name>
+	<url>http://maven.apache.org</url>
+	<properties>
+		<partner.sdk.version>${project.version}</partner.sdk.version>
+		<partner.groupId>com.genkey.partner</partner.groupId>
+		
+		<!--
+		<partner.sdk.groupId>${partner.groupId}</partner.sdk.groupId>
+		-->
+		<partner.sdk.groupId>com.genkey.partnersdk</partner.sdk.groupId>
+	
+		<partner.version>${project.version}</partner.version>
+		<ist.components.version>6.0.7-SNAPSHOT</ist.components.version>
+
+	</properties>
+	<modules>
+		<module>test-abis-client</module>
+		<module>example-framework</module>
+		<module>dgie-examples</module>
+		<module>client-external-dependencies</module>
+	</modules>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>${project.groupId}</groupId>
+				<artifactId>example-framework</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>${partner.sdk.groupId}</groupId>
+				<artifactId>abis-client-dgie</artifactId>
+				<version>${partner.sdk.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>${partner.sdk.groupId}</groupId>
+				<artifactId>test-abis-client</artifactId>
+				<version>${partner.sdk.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>${partner.sdk.groupId}</groupId>
+				<artifactId>abis-client-complete</artifactId>
+				<version>${partner.sdk.version}</version>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>${project.groupId}</groupId>
+				<artifactId>jersey-dependencies</artifactId>
+				<version>${project.version}</version>
+				<scope>provided</scope>
+			</dependency>
+			<!--
+      <dependency>
+        				
+        <groupId>com.genkey.ist.partner</groupId>
+        				
+        <artifactId>abis-client-core</artifactId>
+        				
+        <version>${ist.components.version}</version>
+        				
+        <scope>provided</scope>
+        			
+      </dependency>
+      -->
+			<dependency>
+				<groupId>${partner.sdk.groupId}</groupId>
+				<artifactId>abis-client-testframework</artifactId>
+				<version>${partner.sdk.version}</version>
+				<scope>compile</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
+	<developers>
+		<developer>
+			<id>gd</id>
+			<name>Gavan Duffy</name>
+			<email>gavan.duffy@genkey.com</email>
+			<organization>genkey corporation</organization>
+			<organizationUrl>www.genkey.com</organizationUrl>
+			<timezone>0</timezone>
+			<roles>
+				<role>Architect</role>
+				<role>Developer</role>
+				<role>Tester</role>
+			</roles>
+		</developer>
+	</developers>
+	<build>
+		<defaultGoal>${com.genkey.abis.env.defaultGoal}</defaultGoal>
+		<filters>
+		</filters>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>2.3.2</version>
+				<configuration>
+					<source>1.8</source>
+					<target>1.8</target>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>versions-maven-plugin</artifactId>
+
+			</plugin>
+		</plugins>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<artifactId>maven-assembly-plugin</artifactId>
+					<version>2.6</version>
+				</plugin>
+				<plugin>
+					<groupId>org.codehaus.mojo</groupId>
+					<artifactId>versions-maven-plugin</artifactId>
+
+					<version>2.1</version>
+
+				</plugin>
+
+				<!-- Manages insertion of Implementation-Build Tag with SVN
+				number in all generated Jar files -->
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-jar-plugin</artifactId>
+					<configuration>
+						<archive>
+							<manifestEntries>
+								<Implementation-Build>${buildNumber}</Implementation-Build>
+							</manifestEntries>
+						</archive>
+					</configuration>
+				</plugin>
+
+			</plugins>
+
+		</pluginManagement>
+	</build>
+
+</project>

@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<project
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+	xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>com.genkey.dgie.examples</groupId>
+		<artifactId>partner-examples</artifactId>
+		<version>6.1.1-SNAPSHOT</version>
+	</parent>
+	<artifactId>dgie-examples</artifactId>
+	<name>dgie-examples</name>
+	<url>http://maven.apache.org</url>
+	<properties>
+		<partner.groupId>com.genkey.partner</partner.groupId>
+		<ist.version>6.0.5-SNAPSHOT</ist.version>
+	</properties>
+	<dependencies>
+
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>example-framework</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>${partner.sdk.groupId}</groupId>
+			<artifactId>abis-client-dgie</artifactId>
+
+		</dependency>
+
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>client-external-dependencies</artifactId>
+			<version>${project.version}</version>
+			<scope>compile</scope>
+		</dependency>
+
+	</dependencies>
+</project>

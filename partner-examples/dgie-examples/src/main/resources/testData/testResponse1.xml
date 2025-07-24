@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<response>
+    <timestamp>1753219098285</timestamp>
+    <request requestId="1@genkeyTest" operation="INSERT">
+        <subject biographicId="1@genkeyTest">
+            <enrolment enrolmentId="1"/>
+        </subject>
+    </request>
+    <operationResult>MATCHES_FOUND</operationResult>
+    <matches>
+        <match score="3072.0" likelihoodScore="75.78970336914062" equivalentFAR="6.259800000000333E-308" equivalentFRR="0.9999764561653137" biographicId="1@EnrollmentSDK" enrolmentId="1">
+            <instanceScores>
+                <instanceScore instanceId="1" modality="FINGER" score="1.0" likelihoodScore="0.0" matchInstanceId="1"/>
+                <instanceScore instanceId="2" modality="FINGER" score="1.0" likelihoodScore="0.0" matchInstanceId="2"/>
+                <instanceScore instanceId="3" modality="FINGER" score="1.0" likelihoodScore="0.0" matchInstanceId="3"/>
+                <instanceScore instanceId="4" modality="FINGER" score="1.0" likelihoodScore="0.0" matchInstanceId="4"/>
+                <instanceScore instanceId="6" modality="FINGER" score="1.0" likelihoodScore="0.0" matchInstanceId="6"/>
+                <instanceScore instanceId="7" modality="FINGER" score="1.0" likelihoodScore="0.0" matchInstanceId="7"/>
+            </instanceScores>
+        </match>
+    </matches>
+</response>

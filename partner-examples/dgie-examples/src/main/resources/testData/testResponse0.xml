@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<response>
+    <timestamp>1753009046722</timestamp>
+    <request requestId="07-34-227-1172-14-000331_compare" operation="COMPARE" lim="false">
+        <subject biographicId="07-34-227-1172-14-000331" biographicId2="07-34-227-8609-25-000047"/>
+    </request>
+    <operationResult>NOT_VERIFIED</operationResult>
+    <matches>
+        <match score="0.0" likelihoodScore="0.0" equivalentFAR="1.0" equivalentFRR="0.0" biographicId="07-34-227-8609-25-000047"/>
+    </matches>
+</response>
