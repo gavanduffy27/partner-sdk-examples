@@ -14,10 +14,9 @@
 		<partner.groupId>com.genkey.partner</partner.groupId>
 		
 		<!--
-		<partner.sdk.groupId>${partner.groupId}</partner.sdk.groupId>
-		-->
 		<partner.sdk.groupId>com.genkey.partnersdk</partner.sdk.groupId>
-	
+		-->
+		<partner.sdk.groupId>${partner.groupId}</partner.sdk.groupId>	
 		<partner.version>${project.version}</partner.version>
 		<ist.components.version>6.0.7-SNAPSHOT</ist.components.version>
 

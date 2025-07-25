@@ -349,6 +349,12 @@ public abstract class ExampleModule extends GKTestCase4 implements IExampleTest{
 		//System.out.println(text);
 		DefaultMessageHandler.printMessage(text);
 	}
+
+	public static void printMessageF(String format, Object ... args) {
+		String message = String.format(format, args);
+		printMessage(message);
+	}
+	
 	
 	public static void printHeader(String text) {
 		DefaultMessageHandler.printHeader(text);

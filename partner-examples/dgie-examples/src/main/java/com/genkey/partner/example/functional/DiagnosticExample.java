@@ -20,6 +20,8 @@ public class DiagnosticExample extends PartnerExample{
 	
 	static final String TestSubject = "94E7D7485A2C4F0AA6F1AC2D693B4CD4";
 	
+	static final String ENV_CONFIG_HOME="IST_CONFIG_HOME";
+	
 	javax.ws.rs.client.Client client;
 	org.springframework.context.support.GenericApplicationContext context;
 	
@@ -31,7 +33,8 @@ public class DiagnosticExample extends PartnerExample{
 	}
 
 	public void runAllExamples() {
-		responseParseCheck();
+		testConfigAccess();
+//		responseParseCheck();
 //		imageCheck();
 //		testSubjectCheck();
 	}
@@ -41,6 +44,58 @@ public class DiagnosticExample extends PartnerExample{
 		"testData/testResponse0.xml",
 		"testData/testResponse1.xml"
 	};
+	
+	public void testConfigAccess() {
+		
+		String configPath = FileUtils.getConfigurationPath();
+		boolean exists;
+
+		super.printHeader("Running configuration test");
+		
+		String envValue = System.getenv(ENV_CONFIG_HOME);
+		super.printResult(ENV_CONFIG_HOME, envValue);
+		
+		if (configPath == null) {
+			printError("Configuration path not configured"); 
+		} else {
+			printMessageF("Configuration path is configured as %s", configPath);
+			exists = FileUtils.isDirectory(configPath);
+			if (!exists) {
+				printErrorF("Configuration path %s configured does not exist", configPath); 				
+			} else {
+				printMessageF("Configuration path exists");
+			}
+		}
+		String imageFolder = TestDataManager.getImageDirectory();
+		if ( FileUtils.isDirectory(imageFolder)) {
+			printMessageF("ImageFolder %s exists", imageFolder);
+		} else {
+			printErrorF("Imagefolder %s does not exist", imageFolder);
+		}
+		
+		String testImageFile = TestDataManager.getImageFile(1, 1, 1);
+		boolean loadSuccess;
+		if (FileUtils.existsFile(testImageFile)) {
+			printMessageF("Image file %s for subject/finger/sample %d/%d/%d exists", testImageFile, 1,1,1);
+			try {
+				ImageData image = TestDataManager.loadImage(testImageFile);
+				loadSuccess = (image != null);
+			} catch (Exception e) {
+				loadSuccess=false;
+			}
+		} else {
+			printErrorF("Image file %s for subject/finger/sample %d/%d/%d not found ", testImageFile,  1,1,1);
+			loadSuccess=false;
+		}
+		if (loadSuccess) {
+			printMessageF("TestImage %s successfully loaded", testImageFile);
+		} else {
+			printErrorF("TestImage %s successfully loaded", testImageFile);
+		}
+		
+		printEndTest("testConfigAccess");
+		
+	}
 	
 	public void responseParseCheck() {
 		for(String resource : responseResources) {

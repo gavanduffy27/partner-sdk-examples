@@ -124,14 +124,27 @@ public abstract class PartnerExample extends ExampleModule{
 		PartnerTestSuite.init();
 	}
 	
+	long tearDownPauseTime=5000;
+	
 	@Override
 	protected void tearDown() {
 		// TODO Auto-generated method stub
+		
 		super.tearDown();
-		Commons.waitMillis(10000);
+		FormatUtils.printBanner(" Waiting " + getTearDownPauseTime()/1000.0 + " seconds before shutdown");
+		Commons.waitMillis(getTearDownPauseTime());
+		printMessage("Exiting now");
 	}
 
+	
 
+	public long getTearDownPauseTime() {
+		return tearDownPauseTime;
+	}
+
+	public void setTearDownPauseTime(long tearDownPauseTime) {
+		this.tearDownPauseTime = tearDownPauseTime;
+	}
 
 	@Override
 	protected void runAllExamples() {

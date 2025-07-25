@@ -181,6 +181,12 @@ public class GKTestCase4 {
 	public static void printError(String message) {
 		printCategoryMessage("Error", message);
 	}
+
+	public static void printErrorF(String format, Object ... args) {
+		String message = String.format(format, args);
+		printError(message);
+	}
+	
 	
 	public static void printCategoryMessage(String typeName, String message) {
 		printMessage(typeName + "::" + message);
