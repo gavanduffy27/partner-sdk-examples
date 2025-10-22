@@ -41,11 +41,11 @@ public abstract class PartnerExample extends ExampleModule{
 	
 	static boolean DeletesPending=false;
 	
-	static boolean FaceMatchEnabled=false;
+	static boolean FaceMatchEnabled=true;
 	
 	static boolean enforcePendingDelete=false;
 	
-	protected static boolean UseRemote=true;
+	protected static boolean UseRemote=false;
 	
 	protected static boolean UseDR=false;
 	

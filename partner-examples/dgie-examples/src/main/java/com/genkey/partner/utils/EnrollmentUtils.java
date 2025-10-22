@@ -129,7 +129,7 @@ public class EnrollmentUtils {
 		String domainName = result.getDomainName();
 	
 		int [] tgtFingers = result.getTargetFingers();
-		
+
 		int [] fingersPresent = result.getFingersComplete();
 
 		int nSamples=0;

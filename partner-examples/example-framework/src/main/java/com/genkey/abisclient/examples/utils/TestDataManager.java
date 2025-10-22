@@ -255,10 +255,19 @@ public class TestDataManager {
 	}
 
 	public static String getPortraitImageFile(Object subject) {
+		/*
 		String baseName= String.format("face_%s", subject.toString());
 		return FileUtils.expandConfigFile(PortraitImagePath, baseName, ImageUtils.EXT_JPEG);
+		*/
+		return getPortraitImageFile(subject, 1);
 	}
 
+	public static String getPortraitImageFile(Object subject, int sampleIndex) {
+		String baseName= String.format("face_%s_%d", subject.toString(), sampleIndex);
+		return FileUtils.expandConfigFile(PortraitImagePath, baseName, ImageUtils.EXT_JPEG);
+	}
+	
+	
 	public static ImageData loadImage(String fileName) {
 		try {
 			if (!FileUtils.isAbsolutePath(fileName)) {
