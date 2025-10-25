@@ -5,7 +5,7 @@
   <parent>
     <artifactId>partner-examples</artifactId>
     <groupId>com.genkey.dgie.examples</groupId>
-    <version>6.2-RELEASE</version>
+    <version>6.2.1-SNAPSHOT</version>
   </parent>
   <artifactId>test-abis-client</artifactId>
   <name>test-abis-client</name>

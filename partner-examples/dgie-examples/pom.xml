@@ -8,7 +8,7 @@
 	<parent>
 		<groupId>com.genkey.dgie.examples</groupId>
 		<artifactId>partner-examples</artifactId>
-		<version>6.2-RELEASE</version>
+		<version>6.2.1-SNAPSHOT</version>
 	</parent>
 	<artifactId>dgie-examples</artifactId>
 	<name>dgie-examples</name>
