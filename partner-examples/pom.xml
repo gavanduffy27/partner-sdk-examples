@@ -6,7 +6,7 @@
 	<packaging>pom</packaging>
 	<groupId>com.genkey.dgie.examples</groupId>
 	<artifactId>partner-examples</artifactId>
-	<version>6.1.1-SNAPSHOT</version>
+	<version>6.2-RELEASE</version>
 	<name>partner-examples</name>
 	<url>http://maven.apache.org</url>
 	<properties>
@@ -16,15 +16,14 @@
 		<partner.sdk.groupId>com.genkey.partnersdk</partner.sdk.groupId>
 		-->
 		<partner.sdk.groupId>com.genkey.partner</partner.sdk.groupId>
-		<partner.version>${project.version}</partner.version>
-		<ist.components.version>6.0.7-SNAPSHOT</ist.components.version>
-
+		<partner.version>6.2-RELEASE</partner.version>
 	</properties>
 	<modules>
 		<module>test-abis-client</module>
 		<module>example-framework</module>
 		<module>dgie-examples</module>
 		<module>client-external-dependencies</module>
+		<module>jersey-dependencies</module>
 	</modules>
 
 	<dependencyManagement>
