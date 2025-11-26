@@ -1,28 +1,29 @@
 package com.genkey.abisclient.examples;
 
-import java.util.List;
-
 import com.genkey.abisclient.ImageData;
+import java.util.List;
 
 /**
  * Note almost all functions are provided in the Abstract base handler implementation,
- * @author Gavan
  *
+ * @author Gavan
  */
 public interface UserMessageHandler {
-	/**
-	 * Prints message feedback to user
-	 * @param message
-	 */
-	void printMessage(String message);
-	
-	boolean promptContinue(String message);
-	
-	void showImageFeedback(ImageData image, String title);
+  /**
+   * Prints message feedback to user
+   *
+   * @param message
+   */
+  void printMessage(String message);
 
-	void showImageList(String title, List<ImageData> imageList, int nrows, int nColumns, double scaleFactor);
+  boolean promptContinue(String message);
 
-	void printHeader(String text);
+  void showImageFeedback(ImageData image, String title);
 
-	void printHeader(String text, char ch);
+  void showImageList(
+      String title, List<ImageData> imageList, int nrows, int nColumns, double scaleFactor);
+
+  void printHeader(String text);
+
+  void printHeader(String text, char ch);
 }

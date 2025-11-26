@@ -1,8 +1,7 @@
 package com.genkey.abisclient.examples;
 
 public interface IExampleTest {
-	void runTestExamples();
+  void runTestExamples();
 
-	UserMessageHandler getUserMessageHandler();
-
+  UserMessageHandler getUserMessageHandler();
 }

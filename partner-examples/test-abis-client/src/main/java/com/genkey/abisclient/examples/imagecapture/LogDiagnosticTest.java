@@ -4,69 +4,66 @@ import com.genkey.abisclient.ImageContextSDK;
 import com.genkey.abisclient.examples.ExampleModule;
 import com.genkey.platform.utils.FileUtils;
 
-public class LogDiagnosticTest extends ExampleModule{
-	
-	final static String CONFIG_FILE = "ABISClientLog.cfg";
-	final static String CONFIG_FILE2 = "ABISClientLogTest.cfg";
-	
-	final static String LOG_CONFIG_PATH="configuration/logging";
-	
-	final static String LOGFILE_NAME = "javaTestlog";
-	
-	
-	static enum DiagnosticTest {
-		LogDiagnosticFileTest,
-		LogDiagnosticLoggerTest,
-		LogDiagnosticConsoleTest,
-		LogDiagnosticConfigFileTest,
-		LogDiagnosticConfigStringTest
-	};
-	
+public class LogDiagnosticTest extends ExampleModule {
 
-	@Override
-	protected void runAllExamples() {
-		testReadLog();
-		logConsoleTest();
-		logFileOpenTest();
-		logStandardTest();	
-		logConfigFileTest();
-		logConfigStringTest();		
-	}
+  static final String CONFIG_FILE = "ABISClientLog.cfg";
+  static final String CONFIG_FILE2 = "ABISClientLogTest.cfg";
 
-	private void testReadLog() {
-		String result = ImageContextSDK.readLogDiagnostics(LOGFILE_NAME, 0);
-		printObject("Result", result);
-	}
+  static final String LOG_CONFIG_PATH = "configuration/logging";
 
-	public void logConsoleTest() {
-		executeDiagnosticTest(LOGFILE_NAME, DiagnosticTest.LogDiagnosticConsoleTest);
-	}
+  static final String LOGFILE_NAME = "javaTestlog";
 
-	public void logFileOpenTest() {
-		executeDiagnosticTest(LOGFILE_NAME, DiagnosticTest.LogDiagnosticFileTest);
-	}
+  static enum DiagnosticTest {
+    LogDiagnosticFileTest,
+    LogDiagnosticLoggerTest,
+    LogDiagnosticConsoleTest,
+    LogDiagnosticConfigFileTest,
+    LogDiagnosticConfigStringTest
+  };
 
-	public void logStandardTest() {
-		executeDiagnosticTest(LOGFILE_NAME, DiagnosticTest.LogDiagnosticLoggerTest);
-	}
+  @Override
+  protected void runAllExamples() {
+    testReadLog();
+    logConsoleTest();
+    logFileOpenTest();
+    logStandardTest();
+    logConfigFileTest();
+    logConfigStringTest();
+  }
 
-	public void logConfigFileTest() {
-		executeDiagnosticTest(CONFIG_FILE, DiagnosticTest.LogDiagnosticConfigFileTest);
-	}
+  private void testReadLog() {
+    String result = ImageContextSDK.readLogDiagnostics(LOGFILE_NAME, 0);
+    printObject("Result", result);
+  }
 
-	public void logConfigStringTest() {
-		try {
-			String logConfigFile = FileUtils.expandConfigFile(LOG_CONFIG_PATH, CONFIG_FILE2, "cfg");
-			String logSpec = FileUtils.stringFromFile(logConfigFile);
-			executeDiagnosticTest(logSpec, DiagnosticTest.LogDiagnosticConfigStringTest);
-		} catch (Exception e) {
-			super.handleException(e);
-		}
-	}
+  public void logConsoleTest() {
+    executeDiagnosticTest(LOGFILE_NAME, DiagnosticTest.LogDiagnosticConsoleTest);
+  }
 
-	void executeDiagnosticTest(String logName, DiagnosticTest test) {
-		int result = ImageContextSDK.exploreLogDiagnostics(logName, test.ordinal());
-		printResult(test.toString(), result);
-	}
-	
+  public void logFileOpenTest() {
+    executeDiagnosticTest(LOGFILE_NAME, DiagnosticTest.LogDiagnosticFileTest);
+  }
+
+  public void logStandardTest() {
+    executeDiagnosticTest(LOGFILE_NAME, DiagnosticTest.LogDiagnosticLoggerTest);
+  }
+
+  public void logConfigFileTest() {
+    executeDiagnosticTest(CONFIG_FILE, DiagnosticTest.LogDiagnosticConfigFileTest);
+  }
+
+  public void logConfigStringTest() {
+    try {
+      String logConfigFile = FileUtils.expandConfigFile(LOG_CONFIG_PATH, CONFIG_FILE2, "cfg");
+      String logSpec = FileUtils.stringFromFile(logConfigFile);
+      executeDiagnosticTest(logSpec, DiagnosticTest.LogDiagnosticConfigStringTest);
+    } catch (Exception e) {
+      super.handleException(e);
+    }
+  }
+
+  void executeDiagnosticTest(String logName, DiagnosticTest test) {
+    int result = ImageContextSDK.exploreLogDiagnostics(logName, test.ordinal());
+    printResult(test.toString(), result);
+  }
 }

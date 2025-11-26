@@ -1,6 +1,5 @@
 package com.genkey.abisclient.examples.matchengine;
 
-import com.genkey.abisclient.examples.ExampleModule;
 import com.genkey.abisclient.matchengine.LocalMatchEngine;
 import com.genkey.abisclient.matchengine.MatchEngineConfiguration;
 import com.genkey.abisclient.matchengine.MatchEngineEnums.GKMatcherSwitchParameter;
@@ -8,140 +7,139 @@ import com.genkey.abisclient.matchengine.MatchEngineEnums.GKMatcherThresholdPara
 
 public class MatchEngineConfigTests extends MatchEngineExample {
 
-	@Override
-	protected void runAllExamples() {
-		testConfig();
-		testConfigSwitchThresholds();
-		testConfigDefaults();
-	}
-	
-    /// <summary>
-    /// Tests read/write of MatchEngine configuration.
-    /// </summary>
-    public  void testConfig()
-    {
-        MatchEngineConfiguration config = LocalMatchEngine.getConfiguration();
-        MatchEngineConfiguration current = config;
-        showConfiguration(config);
-        printResult("Config", config);
-    	config.setUseCompactReferences(true);
-    	config.setUsePrefilter(false);
-        LocalMatchEngine.setConfiguration(config);
-        showConfiguration();
+  @Override
+  protected void runAllExamples() {
+    testConfig();
+    testConfigSwitchThresholds();
+    testConfigDefaults();
+  }
 
-        LocalMatchEngine.setConfiguration(current);
-        showConfiguration();
+  /// <summary>
+  /// Tests read/write of MatchEngine configuration.
+  /// </summary>
+  public void testConfig() {
+    MatchEngineConfiguration config = LocalMatchEngine.getConfiguration();
+    MatchEngineConfiguration current = config;
+    showConfiguration(config);
+    printResult("Config", config);
+    config.setUseCompactReferences(true);
+    config.setUsePrefilter(false);
+    LocalMatchEngine.setConfiguration(config);
+    showConfiguration();
 
-        LocalMatchEngine.setThresholdParameter(GKMatcherThresholdParameter.GKThresholdFarMultipler, 12);
-        showConfiguration();
+    LocalMatchEngine.setConfiguration(current);
+    showConfiguration();
 
-        LocalMatchEngine.setSwitchParameter(GKMatcherSwitchParameter.GKSwitchUseLog10ScoreScheme, true);
-        showConfiguration();
+    LocalMatchEngine.setThresholdParameter(GKMatcherThresholdParameter.GKThresholdFarMultipler, 12);
+    showConfiguration();
 
-        LocalMatchEngine.setSwitchParameter(GKMatcherSwitchParameter.GKSwitchUseLegacyScoreScheme, true);
-        showConfiguration();
+    LocalMatchEngine.setSwitchParameter(GKMatcherSwitchParameter.GKSwitchUseLog10ScoreScheme, true);
+    showConfiguration();
 
-        LocalMatchEngine.setSwitchParameter(GKMatcherSwitchParameter.GKSwitchUseLegacyScoreScheme, false);
-        showConfiguration();
+    LocalMatchEngine.setSwitchParameter(
+        GKMatcherSwitchParameter.GKSwitchUseLegacyScoreScheme, true);
+    showConfiguration();
 
-        LocalMatchEngine.setSwitchParameter(GKMatcherSwitchParameter.GKSwitchUseLog10ScoreScheme, false);
-        showConfiguration();
+    LocalMatchEngine.setSwitchParameter(
+        GKMatcherSwitchParameter.GKSwitchUseLegacyScoreScheme, false);
+    showConfiguration();
 
-        LocalMatchEngine.resetConfiguration();
-        showConfiguration();
+    LocalMatchEngine.setSwitchParameter(
+        GKMatcherSwitchParameter.GKSwitchUseLog10ScoreScheme, false);
+    showConfiguration();
 
+    LocalMatchEngine.resetConfiguration();
+    showConfiguration();
 
-        LocalMatchEngine.setConfiguration(config);
-        showConfiguration();
+    LocalMatchEngine.setConfiguration(config);
+    showConfiguration();
 
-        LocalMatchEngine.resetConfiguration();
-        showConfiguration();
+    LocalMatchEngine.resetConfiguration();
+    showConfiguration();
+  }
 
+  public void testConfigSwitchThresholds() {
+    // Obtain config the normal way ..
+    MatchEngineConfiguration.Settings config = LocalMatchEngine.getConfiguration().getSettings();
 
-    }
+    MatchEngineConfiguration.Settings config2 = LocalMatchEngine.getConfiguration().getSettings();
 
-    public void testConfigSwitchThresholds()
-    {
-        // Obtain config the normal way ..
-        MatchEngineConfiguration.Settings config = LocalMatchEngine.getConfiguration().getSettings();
+    // MatchEngineConfiguration config2 = MatchEngineConfiguration.getInstance();
+    config2.compactOnImport =
+        LocalMatchEngine.getSwitchParameter(GKMatcherSwitchParameter.GKSwitchCompactOnImport);
+    config2.useCompactReferences =
+        LocalMatchEngine.getSwitchParameter(GKMatcherSwitchParameter.GKSwitchUseCompactReferences);
+    config2.defaultScoreThreshold =
+        LocalMatchEngine.getThresholdParameter(GKMatcherThresholdParameter.GKThresholdFARScore);
+    config2.prefilterEfficiency =
+        LocalMatchEngine.getThresholdParameter(
+            GKMatcherThresholdParameter.GKThresholdPrefilterEfficiency);
+    config2.preFilterTriggerSize =
+        (int)
+            LocalMatchEngine.getThresholdParameter(
+                GKMatcherThresholdParameter.GKThresholdPrefilterTriggerSize);
+    config2.usePrefilter =
+        LocalMatchEngine.getSwitchParameter(GKMatcherSwitchParameter.GKSwitchUsePrefilter);
+    boolean useLegacyScore =
+        LocalMatchEngine.getSwitchParameter(GKMatcherSwitchParameter.GKSwitchUseLegacyScoreScheme);
+    boolean useTenLog10Far10Scheme =
+        LocalMatchEngine.getSwitchParameter(GKMatcherSwitchParameter.GKSwitchUseLog10ScoreScheme);
 
-    	
-    	MatchEngineConfiguration.Settings config2 = LocalMatchEngine.getConfiguration().getSettings();
+    // view the current configuration
+    printHeaderResult("Config1", LocalMatchEngine.getDescriptionConfig());
 
-        //MatchEngineConfiguration config2 = MatchEngineConfiguration.getInstance();
-        config2.compactOnImport = LocalMatchEngine.getSwitchParameter(GKMatcherSwitchParameter.GKSwitchCompactOnImport);
-        config2.useCompactReferences = LocalMatchEngine.getSwitchParameter(GKMatcherSwitchParameter.GKSwitchUseCompactReferences);
-        config2.defaultScoreThreshold = LocalMatchEngine.getThresholdParameter(GKMatcherThresholdParameter.GKThresholdFARScore);
-        config2.prefilterEfficiency = LocalMatchEngine.getThresholdParameter(GKMatcherThresholdParameter.GKThresholdPrefilterEfficiency);
-        config2.preFilterTriggerSize = (int)LocalMatchEngine.getThresholdParameter(GKMatcherThresholdParameter.GKThresholdPrefilterTriggerSize);
-        config2.usePrefilter = LocalMatchEngine.getSwitchParameter(GKMatcherSwitchParameter.GKSwitchUsePrefilter);
-        boolean useLegacyScore = LocalMatchEngine.getSwitchParameter(GKMatcherSwitchParameter.GKSwitchUseLegacyScoreScheme);
-        boolean useTenLog10Far10Scheme = LocalMatchEngine.getSwitchParameter(GKMatcherSwitchParameter.GKSwitchUseLog10ScoreScheme);
+    // View the configuration we just retrieved
+    LocalMatchEngine.getConfiguration().applySettings(config2);
+    printHeaderResult("Config2 Update", LocalMatchEngine.getDescriptionConfig());
 
-        // view the current configuration
-        printHeaderResult("Config1", LocalMatchEngine.getDescriptionConfig());
+    // reset back to what it was before
+    LocalMatchEngine.getConfiguration().applySettings(config);
+    printHeaderResult("Config1 (restored)", LocalMatchEngine.getDescriptionConfig());
+  }
 
-        // View the configuration we just retrieved
-        LocalMatchEngine.getConfiguration().applySettings(config2);
-        printHeaderResult("Config2 Update", LocalMatchEngine.getDescriptionConfig());
+  public void testConfigDefaults() {
+    // Save current for later restore
+    MatchEngineConfiguration.Settings current = LocalMatchEngine.getConfiguration().getSettings();
+    // Show current configuration
+    showConfiguration();
 
-        // reset back to what it was before
-        LocalMatchEngine.getConfiguration().applySettings(config);
-        printHeaderResult("Config1 (restored)", LocalMatchEngine.getDescriptionConfig());
-    }
+    boolean useStandardConfig = LocalMatchEngine.getConfiguration().isUseStandardConfig();
+    printResult("useStandardConfig initial", useStandardConfig);
 
-    public void testConfigDefaults()
-    {
-        // Save current for later restore
-        MatchEngineConfiguration.Settings current = LocalMatchEngine.getConfiguration().getSettings();
-        // Show current configuration
-        showConfiguration();
+    // Set to standard settings
+    LocalMatchEngine.setUseStandardConfig(true);
+    showConfiguration();
 
-		boolean useStandardConfig = LocalMatchEngine.getConfiguration().isUseStandardConfig();
-		printResult("useStandardConfig initial", useStandardConfig);
+    LocalMatchEngine.setSwitchParameter(
+        GKMatcherSwitchParameter.GKSwitchUseLegacyScoreScheme, true);
 
-	
-        // Set to standard settings
-        LocalMatchEngine.setUseStandardConfig(true);
-        showConfiguration();
+    MatchEngineConfiguration config = LocalMatchEngine.getConfiguration();
 
-        LocalMatchEngine.setSwitchParameter(GKMatcherSwitchParameter.GKSwitchUseLegacyScoreScheme, true);
+    config.setFingerUnknownConstraints(new int[] {2, 7, 3, 8});
+    LocalMatchEngine.setConfiguration(config);
 
-	
-        MatchEngineConfiguration config = LocalMatchEngine.getConfiguration();
+    showConfiguration();
 
-	
-        config.setFingerUnknownConstraints( new int [] {2,7,3,8});
-        LocalMatchEngine.setConfiguration(config);
+    // Calling reset restores standard config
+    LocalMatchEngine.resetConfiguration();
+    showConfiguration();
 
-	
-        showConfiguration();
-	
+    // Set to legacy defaults
+    LocalMatchEngine.setUseStandardConfig(false);
+    showConfiguration();
+    LocalMatchEngine.setSwitchParameter(
+        GKMatcherSwitchParameter.GKSwitchUseLegacyScoreScheme, false);
+    LocalMatchEngine.setSwitchParameter(GKMatcherSwitchParameter.GKSwitchUsePrefilter, true);
+    showConfiguration();
 
-        // Calling reset restores standard config
-        LocalMatchEngine.resetConfiguration();
-        showConfiguration();
+    // Calling reset restores legacy config because UseStandardConfig is false
+    LocalMatchEngine.resetConfiguration();
+    showConfiguration();
 
-
-        // Set to legacy defaults
-        LocalMatchEngine.setUseStandardConfig(false);
-        showConfiguration();
-        LocalMatchEngine.setSwitchParameter(GKMatcherSwitchParameter.GKSwitchUseLegacyScoreScheme, false);
-        LocalMatchEngine.setSwitchParameter(GKMatcherSwitchParameter.GKSwitchUsePrefilter, true);
-        showConfiguration();
-
-        // Calling reset restores legacy config because UseStandardConfig is false
-        LocalMatchEngine.resetConfiguration();
-        showConfiguration();
-
-	
-        //restore to current
-        int [] constraints = current.fingerUnknownConstraints;
-        printResult("Constraints", constraints);
-        LocalMatchEngine.getConfiguration().applySettings(current);
-        showConfiguration();
-
-    }
-	
-
+    // restore to current
+    int[] constraints = current.fingerUnknownConstraints;
+    printResult("Constraints", constraints);
+    LocalMatchEngine.getConfiguration().applySettings(current);
+    showConfiguration();
+  }
 }
