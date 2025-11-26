@@ -6,7 +6,7 @@
 	<packaging>pom</packaging>
 	<groupId>com.genkey.dgie.examples</groupId>
 	<artifactId>partner-examples</artifactId>
-	<version>6.2.1-SNAPSHOT</version>
+	<version>6.2.2-SNAPSHOT</version>
 	<name>partner-examples</name>
 	<url>http://maven.apache.org</url>
 	<properties>
@@ -16,7 +16,7 @@
 		<partner.sdk.groupId>com.genkey.partnersdk</partner.sdk.groupId>
 		-->
 		<partner.sdk.groupId>com.genkey.partner</partner.sdk.groupId>
-		<partner.version>6.2.1-SNAPSHOT</partner.version>
+		<partner.version>6.2.2-SNAPSHOT</partner.version>
 	</properties>
 	<modules>
 		<module>test-abis-client</module>
@@ -25,6 +25,11 @@
 		<module>client-external-dependencies</module>
 		<module>jersey-dependencies</module>
 	</modules>
+
+	<scm>
+		<connection>scm:git:https://github.com/genkeydev/partner-sdk-examples.git</connection>
+		<developerConnection>scm:git:https://github.com/genkeydev/partner-sdk-examples.git</developerConnection>
+	</scm>
 
 	<dependencyManagement>
 		<dependencies>
@@ -92,6 +97,34 @@
 			</roles>
 		</developer>
 	</developers>
+
+	<repositories>
+		<repository>
+			<id>mmg-maven</id>
+			<url>https://maven.pkg.github.com/genkeydev/*</url>
+		</repository>
+		<repository>
+			<id>snapshots</id>
+			<url>
+				https://nexus.genkey.com:8180/nexus/content/repositories/snapshots</url>
+		</repository>
+		<repository>
+			<id>releases</id>
+			<url>
+				https://nexus.genkey.com:8180/nexus/content/repositories/releases</url>
+		</repository>
+		<repository>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+			<id>MavenCentral</id>
+			<name>Maven repository</name>
+			<url>https://repo1.maven.org/maven2</url>
+		</repository>
+	</repositories>
 	<build>
 		<defaultGoal>${com.genkey.abis.env.defaultGoal}</defaultGoal>
 		<filters>
