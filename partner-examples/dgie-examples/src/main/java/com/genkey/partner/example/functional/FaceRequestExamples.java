@@ -32,6 +32,7 @@ public class FaceRequestExamples extends FunctionalTestExample {
 	@Override
 	protected void runAllExamples() {
 		verifyExample();
+		identifyExample();
 	}
 	
 	public void verifyExample() {

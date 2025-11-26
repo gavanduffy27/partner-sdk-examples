@@ -33,8 +33,6 @@ public class SimpleConnectionTest extends PartnerExample {
 	
 	public static boolean runInline;
 	
-	javax.activation.DataSource activeDs;
-	
 
 	public static void main(String [] args) {
 		Date date = new Date(1597805718000l);

@@ -15,6 +15,10 @@ public class ExampleTestUtils {
 	public static String OPT_SETTINGS = "abis.partner.settings_file";
 	
 	
+	public static void setSettingsFile(String fileName) {
+		System.setProperty(OPT_SETTINGS, fileName);
+	}
+	
 	public static void loadDefaultSettings() {
 		loadSettings(OPT_SETTINGS, DefaultSettingsFile);
 	}

@@ -15,18 +15,14 @@ import com.genkey.platform.utils.FileUtils;
 
 public class PartnerTestSuite extends ExampleSuite{
 	
-	//public static final String ServiceHost = PartnerExample.ServiceHost;
-	//public static final String LegacyServiceHost = PartnerExample.LegacyServiceHost;
-
-	//public static final int ServicePort = PartnerExample.ServicePort;
-
-	//public static final String DomainName = PartnerExample.DomainName;
-
-
 	public static boolean flgInit=false;
 	
 	public static boolean flgClientInit=false;
-		
+	
+	// Define a settings file
+	//static String SETTINGS_FILE="./test/remoteTest.ini";
+	static String SETTINGS_FILE="./test/localTest.ini";
+	
 	
 	
 	//static PropertyMap prop
@@ -34,6 +30,10 @@ public class PartnerTestSuite extends ExampleSuite{
 	public static void init() {
 		if (!flgInit) {
 			try {
+				// Comment out this line to use other mechanisms
+				ExampleTestUtils.setSettingsFile(SETTINGS_FILE);
+				
+				// Generic method for establishing settings
 				ExampleTestUtils.loadDefaultSettings();
 
 				String ServiceHost = PartnerExample.getPrimaryHost();

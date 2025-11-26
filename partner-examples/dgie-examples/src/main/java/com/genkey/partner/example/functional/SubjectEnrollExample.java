@@ -4,6 +4,7 @@ import org.junit.Test;
 
 import com.genkey.abisclient.ImageBlob;
 import com.genkey.abisclient.ImageData;
+import com.genkey.abisclient.examples.utils.ExampleTestUtils;
 import com.genkey.abisclient.examples.utils.TestDataManager;
 import com.genkey.abisclient.ext.ImageWrapperSet;
 import com.genkey.abisclient.matchengine.MatchResult;
@@ -39,7 +40,7 @@ import com.genkey.platform.utils.FormatUtils;
  */
 public class SubjectEnrollExample extends FunctionalTestExample {
 
-	public static int EnrollmentSubject = 2;
+	public static int EnrollmentSubject = 1;
 	public static String EnrollmentSubjectID = String.valueOf(EnrollmentSubject);
 
 	public static void main(String[] args) {
@@ -47,6 +48,7 @@ public class SubjectEnrollExample extends FunctionalTestExample {
 		test.processCommandLine(args);
 	}
 
+	
 	public void setUp() {
 		super.setUp();
 		String abisConnection = getTestABISService().waitABISConnection(20000, 2000);
@@ -458,10 +460,15 @@ public class SubjectEnrollExample extends FunctionalTestExample {
 	@Test
 	public void identifyExample() {
 		String biographicId = String.valueOf(EnrollmentSubject);
-		identifyExample(biographicId, TenFingers);
+		identifyExample(biographicId, TenFingers, false);
+		identifyExample(biographicId, TenFingers, true);
+	}
+	
+	public void identifyExample(String biographicId, int[] fingers) {
+		identifyExample(biographicId, fingers);
 	}
 
-	public void identifyExample(String biographicId, int[] fingers) {
+	public void identifyExample(String biographicId, int[] fingers, boolean faceEnabled) {
 		int subjectNumber = Integer.valueOf(biographicId);
 		GenkeyABISService abisService = ABISServiceModule.getABISService();
 		BiographicService biographicService = BiographicServiceModule.getBiographicService();
@@ -471,7 +478,7 @@ public class SubjectEnrollExample extends FunctionalTestExample {
 		checkSubjectEnrolled(biographicId);
 
 		SubjectEnrollmentReference subject = EnrollmentUtils.enrollSubject(subjectNumber, fingers, 1, 1);
-		if (isFaceMatchEnabled()) {
+		if (faceEnabled) {
 			EnrollmentUtils.enrollFacePortrait(subject);
 		}
 		subject.setSubjectID(null);
@@ -521,17 +528,30 @@ public class SubjectEnrollExample extends FunctionalTestExample {
 	 */
 	@Test
 	public void verifyExample() {
-		doVerifyExample(EnrollmentSubjectID, RightHand);
+		verifyExampleFingersOnly();
+		verifyExampleMultiModal();
+	}
+	
+	public void verifyExampleFingersOnly() {
+		doVerifyExample(EnrollmentSubjectID, RightHand, false);		
 	}
 
+	public void verifyExampleMultiModal() {
+		doVerifyExample(EnrollmentSubjectID, RightHand, true);		
+	}
+	
 	public void doVerifyExample(String biographicId, int[] fingers) {
+		doVerifyExample(biographicId, fingers, PartnerExample.isFaceMatchEnabled());
+	}
+	
+	public void doVerifyExample(String biographicId, int[] fingers, boolean faceEnabled) {
 		checkSubjectEnrolled(biographicId);
 
 		GenkeyABISService abisService = ABISServiceModule.getABISService();
 		int subjectId = Integer.parseInt(biographicId);
 
 		SubjectEnrollmentReference enrollmentRef = EnrollmentUtils.enrollSubject(subjectId, fingers, 1, 1);
-		if (isFaceMatchEnabled()) {
+		if (faceEnabled) {
 			EnrollmentUtils.enrollFacePortrait(enrollmentRef);
 		}
 		
@@ -599,6 +619,120 @@ public class SubjectEnrollExample extends FunctionalTestExample {
 
 	}
 
+	public void standardEnrollExample(String biographicId, int [] targetFingers) {
+		standardEnrollExample(biographicId, targetFingers,PartnerExample.isFaceMatchEnabled());
+	}
+	
+	public void standardEnrollExample(String biographicId, int[] targetFingers, boolean faceMatchEnabled) {
+
+		int subjectNumber = Integer.valueOf(biographicId);
+		// Access the services - note there are different ways to access the service
+		LegacyMatchingService legacyService = DGIEServiceModule.getLegacyService();
+		BiographicService biographicService = BiographicServiceModule.getBiographicService();
+		GenkeyABISService abisService = ABISServiceModule.getABISService();
+
+		String domainName = abisService.getDomainName();
+		String externalId = BiographicIdentifier.resolveExternalID(biographicId, domainName);
+
+		String domain1 = legacyService.getDomainName();
+		String domain2 = biographicService.getDomainName();
+		String domain3 = abisService.getDomainName();
+
+		while (!abisService.testAvailable()) {
+			printMessage("\nError status " + abisService.getStatusCode() + ":" + abisService.getLastErrorMessage());
+			Commons.waitMillis(2000);
+		}
+
+		// Check ABIS system is also available
+		String abisConnection = abisService.testABISConnection();
+
+		printObject("ABIS Connection", abisConnection);
+
+		SubjectEnrollmentReference subject = new SubjectEnrollmentReference();
+
+		boolean existsSubject = abisService.existsSubject(biographicId);
+
+		if (existsSubject) {
+			println("Subject " + externalId + " already exists. Processing as a verification test");
+			doVerifyExample(biographicId, targetFingers);
+			return;
+		}
+
+		// Check and verify against legacy service if present
+		if (legacyService.existsSubject(biographicId)) {
+
+			int[] legacyFingers = legacyService.existsSubjectRecord(biographicId);
+			subject.setTargetFingers(legacyFingers);
+			EnrollmentUtils.enrollSubject(subject, subjectNumber, 1, 1);
+
+			VerifyResponse verifyResponse = legacyService.verifySubject(subject);
+
+			if (!verifyResponse.isVerified()) {
+				double matchScore = verifyResponse.getMatchResult().getMatchScore();
+				super.printMessage("Warning subject " + biographicId + " failed verification with score " + matchScore);
+			}
+		} else {
+			printMessage("Subject " + biographicId + " not available as legacy subject");
+
+			if (!PartnerExample.UseRemote) {
+
+				subject.setTargetFingers(Thumbs);
+				EnrollmentUtils.enrollSubject(subject, subjectNumber, 1, 1);
+
+//				forceTestDomain(subject);
+				String subjectId = subject.getSubjectID();
+				printMessage("Performing enroll of " + subjectId + " as legacy subject");
+				boolean legacyEnroll = legacyService.registerSubject(subject);
+				if (!legacyService.isSuccess()) {
+					handleRESTFailure(subject, legacyService);
+				}
+				if (!legacyEnroll) {
+					printMessage("Legacy enrollment failed");
+				}
+			}
+		}
+
+		
+		// complete a 10 finger enrolment
+		subject.setTargetFingers(targetFingers);
+		EnrollmentUtils.enrollSubject(subject, subjectNumber, 1, 1);
+
+		if (faceMatchEnabled) {
+			EnrollmentUtils.enrollFacePortrait(subject);
+		}
+		
+		// Capture the biographic record and insert it
+		BiographicProfileRecord biographicRecord = EnrollmentUtils.getBiographicRecord(biographicId, "john", "doe");
+		
+
+		// Access the abis service and insert it
+		MatchEngineResponse response = abisService.insertSubject(subject, false);
+
+		boolean handleRestFailure = true;
+		if (!response.isSuccess() && handleRestFailure) {
+			printMessage("Handling REST response failure on insert of " + biographicId + " with error code "
+					+ response.getStatusCode());
+			handleRESTFailure(subject, response, abisService);
+			return;
+		} else {
+			printMessage("Insert completed successfully with result " + response.getOperationResult());
+		}
+
+		// Capture the biographic record and insert it
+		//BiographicProfileRecord biographicRecord = EnrollmentUtils.getBiographicRecord(biographicId, "john", "doe");
+		boolean status = biographicService.insertBiographicRecord(biographicRecord);
+
+		if (!status) {
+			handleBiographicInsertFailure(biographicRecord);
+		}
+
+		// Check for matches found
+		if (response.hasMatchResults()) {
+			handleMatchResults(biographicRecord, response);
+		}
+
+	}
+	
 
 
 }
