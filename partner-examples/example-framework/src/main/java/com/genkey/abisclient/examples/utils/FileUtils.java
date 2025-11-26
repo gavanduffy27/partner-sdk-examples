@@ -233,11 +233,11 @@ public class FileUtils {
 
 	private static void setDefaultConfigurationPath() {
 		if (configurationPath == null) {
-			String path = System.getenv(ENV_IST_CONFIG);
+			String path = Commons.getSystemProperty(ENV_IST_CONFIG);
 			configurationPath = path; 
 		}
 		if (configurationPath == null) {
-			String path = System.getenv(ENV_GENKEY_HOME);
+			String path = Commons.getSystemProperty(ENV_GENKEY_HOME);
 			String cfgPath = FileUtils.mkFilePath(path, "config");
 			configurationPath = cfgPath;
 			
