@@ -32,8 +32,8 @@
   </modules>
 
   <scm>
-    <connection>scm:git:https://github.com/genkeydev/partner-sdk-examples.git</connection>
-    <developerConnection>scm:git:https://github.com/genkeydev/partner-sdk-examples.git</developerConnection>
+    <connection>scm:git:https://github.com/gavanduffy27/partner-sdk-examples.git</connection>
+    <developerConnection>scm:git:https://github.com/gavanduffy27/partner-sdk-examples.git</developerConnection>
   </scm>
   <properties>
     <partner.sdk.version>${project.version}</partner.sdk.version>
@@ -94,6 +94,7 @@
     </dependencies>
   </dependencyManagement>
 
+	<!--
   <repositories>
     <repository>
       <id>mmg-maven</id>
@@ -119,6 +120,8 @@
       <url>https://repo1.maven.org/maven2</url>
     </repository>
   </repositories>
+  -->
+  
   <build>
     <defaultGoal>${com.genkey.abis.env.defaultGoal}</defaultGoal>
     <filters></filters>
