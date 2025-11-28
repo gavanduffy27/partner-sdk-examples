@@ -37,12 +37,10 @@
   </scm>
   <properties>
     <partner.sdk.version>${project.version}</partner.sdk.version>
-    <partner.groupId>com.genkey.partner</partner.groupId>
-    <!--
-		<partner.sdk.groupId>com.genkey.partnersdk</partner.sdk.groupId>
-		-->
+   <!--
     <partner.sdk.groupId>com.genkey.partner</partner.sdk.groupId>
-    <partner.version>6.2.2-SNAPSHOT</partner.version>
+ 	-->
+   <partner.sdk.groupId>com.genkey.partnersdk</partner.sdk.groupId>
   </properties>
 
   <dependencyManagement>
