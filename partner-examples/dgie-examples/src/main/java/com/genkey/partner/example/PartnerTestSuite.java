@@ -29,7 +29,7 @@ public class PartnerTestSuite extends ExampleSuite {
     if (!flgInit) {
       try {
         // Comment out this line to use other mechanisms
-        ExampleTestUtils.setSettingsFile(SETTINGS_FILE);
+        //ExampleTestUtils.setSettingsFile(SETTINGS_FILE);
 
         // Generic method for establishing settings
         ExampleTestUtils.loadDefaultSettings();
