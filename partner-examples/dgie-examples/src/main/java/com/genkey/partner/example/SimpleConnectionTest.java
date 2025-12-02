@@ -52,6 +52,7 @@ public class SimpleConnectionTest extends PartnerExample {
   @Override
   protected void setUp() {
     // Block the default initialization routine
+	ExampleTestUtils.setCodeDefaultSettings();
     ExampleTestUtils.loadDefaultSettings();
   }
 

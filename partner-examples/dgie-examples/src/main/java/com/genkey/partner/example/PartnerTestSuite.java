@@ -21,7 +21,7 @@ public class PartnerTestSuite extends ExampleSuite {
 
   // Define a settings file
   // static String SETTINGS_FILE="./test/remoteTest.ini";
-  static String SETTINGS_FILE = "./test/localTest.ini";
+  //static String SETTINGS_FILE = "./test/localTest.ini";
 
   // static PropertyMap prop
 
@@ -30,9 +30,9 @@ public class PartnerTestSuite extends ExampleSuite {
       try {
         // Comment out this line to use other mechanisms
         //ExampleTestUtils.setSettingsFile(SETTINGS_FILE);
+    	ExampleTestUtils.setCodeDefaultSettings() ;
+        ExampleTestUtils.loadDefaultSettings();    		
 
-        // Generic method for establishing settings
-        ExampleTestUtils.loadDefaultSettings();
 
         String ServiceHost = PartnerExample.getPrimaryHost();
         int ServicePort = PartnerExample.getServicePort();
