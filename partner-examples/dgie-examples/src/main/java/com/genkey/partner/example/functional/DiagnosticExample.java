@@ -1,10 +1,12 @@
 package com.genkey.partner.example.functional;
 
+/*
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
+*/
 
 import com.genkey.abisclient.ImageContext;
 import com.genkey.abisclient.ImageData;
@@ -21,7 +23,12 @@ import com.genkey.platform.utils.JAXBMarshallUtils;
 import com.genkey.platform.utils.Logging;
 import com.genkey.platform.utils.ResourceUtils;
 
-import jakarta.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Unmarshaller;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlRootElement;
 
 public class DiagnosticExample extends PartnerExample {
 
@@ -40,6 +47,7 @@ public class DiagnosticExample extends PartnerExample {
 	}
 
 	public void runAllExamples() {
+		jaxbInstantiationTest();
 		testConfigAccess();
 		// responseParseCheck();
 		// imageCheck();

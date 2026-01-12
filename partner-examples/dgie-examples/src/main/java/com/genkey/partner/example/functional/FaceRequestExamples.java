@@ -4,6 +4,7 @@ import com.genkey.abisclient.service.ABISServiceModule;
 import com.genkey.abisclient.service.GenkeyABISService;
 import com.genkey.abisclient.service.MatchEngineResponse;
 import com.genkey.abisclient.service.TestABISService;
+import com.genkey.abisclient.service.UpdateResponse;
 import com.genkey.abisclient.service.VerifyResponse;
 import com.genkey.abisclient.transport.SubjectEnrollmentReference;
 import com.genkey.partner.biographic.BiographicProfileRecord;
@@ -58,6 +59,27 @@ public class FaceRequestExamples extends FunctionalTestExample {
     }
   }
 
+  public void updateExample() {
+	    faceUpdateExample(EnrollmentSubjectID);
+	  }
+  
+  
+  public void faceUpdateExample(String biographicId) {
+	    SubjectEnrollmentReference enrollmentRef = faceOnlyEnroll(biographicId);
+	    GenkeyABISService abisService = ABISServiceModule.getABISService();
+	    if (!abisService.existsSubject(biographicId)) {
+	      return;
+	    }
+	    UpdateResponse updateResponse = abisService.updateSubject(enrollmentRef);
+	    if (!updateResponse.isSuccess()) {
+	      handleRESTFailure(enrollmentRef, updateResponse, abisService);
+	    } else {
+	      printMessage(
+	          "Update success with " + updateResponse.getOperationResult());
+	    }
+	  }
+  
+  
   public void identifyExample() {
     identifyExample(EnrollmentSubjectID);
   }

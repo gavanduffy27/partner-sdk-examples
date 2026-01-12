@@ -41,8 +41,10 @@ public abstract class PartnerExample extends ExampleModule {
 
   static boolean enforcePendingDelete = false;
 
-  protected static boolean UseRemote = false;
+  //protected static boolean UseRemote = false;
 
+  protected static boolean FlgRemote = false;
+  
   protected static boolean UseDR = false;
 
   public static String LocalPrimaryHost = UseDR ? LocalServiceHostDR : LocalServiceHost;
@@ -50,16 +52,16 @@ public abstract class PartnerExample extends ExampleModule {
   public static String LocalSecondaryHost = UseDR ? LocalServiceHost : LocalServiceHostDR;
   public static final String RemoteSecondaryHost = UseDR ? RemoteServiceHost : RemoteServiceHostDR;
 
-  private static final String ServiceHost = UseRemote ? RemotePrimaryHost : LocalPrimaryHost;
-  private static final String FailoverHost = UseRemote ? RemoteSecondaryHost : LocalSecondaryHost;
+  private static final String ServiceHost = FlgRemote ? RemotePrimaryHost : LocalPrimaryHost;
+  private static final String FailoverHost = FlgRemote ? RemoteSecondaryHost : LocalSecondaryHost;
   private static final String LegacyServiceHost = ServiceHost;
   private static final int ServicePortLocal = 9091;
   private static final int ServicePortRemote = 8091;
-  private static final int ServicePort = UseRemote ? ServicePortRemote : ServicePortLocal;
+  private static final int ServicePort = FlgRemote ? ServicePortRemote : ServicePortLocal;
   private static final int ABISPort = 0;
   private static final String DomainName = "EnrollmentSDK";
   private static final String TestDomain = "test";
-
+  
   public static int[] FourFingers = Commons.generateRangeV(2, 3, 7, 8);
 
   public static int[] SixFingers = Commons.generateRangeV(1, 2, 3, 6, 7, 8);
@@ -79,7 +81,9 @@ public abstract class PartnerExample extends ExampleModule {
   public static String OPT_HOSTNAME_DR = "abis.partner.hostName.dr";
   public static String OPT_PORT = "abis.partner.port";
   public static String OPT_DOMAIN_NAME = "abis.partner.domainName";
-
+  public static String OPT_USE_REMOTE= "abis.partner.remote";
+  public static String OPT_FACE_ENABLED= "abis.partner.faceEnabled";
+  
   public static void initImageDirectory() {
     TestDataManager.setImageRootPath(PartnerImagePath);
     TestDataManager.setImageSet(ImageSet100);
@@ -105,6 +109,10 @@ public abstract class PartnerExample extends ExampleModule {
     return ExampleTestUtils.getPropertyValue(OPT_DOMAIN_NAME, DomainName);
   }
 
+  public static boolean isUseRemote() {
+	  return ExampleTestUtils.getPropertyBoolean(OPT_USE_REMOTE, FlgRemote);
+  }
+  
   @BeforeClass
   public static void checkTestsuiteInit() {
     PartnerTestSuite.init();
@@ -216,11 +224,11 @@ public abstract class PartnerExample extends ExampleModule {
   }
 
   public static boolean isFaceMatchEnabled() {
-    return FaceMatchEnabled;
+    return ExampleTestUtils.getPropertyBoolean(OPT_FACE_ENABLED, PartnerExample.FaceMatchEnabled);
   }
 
   public static void setFaceMatchEnabled(boolean faceMatchEnabled) {
-    FaceMatchEnabled = faceMatchEnabled;
+    ExampleTestUtils.setPropertyValue(OPT_FACE_ENABLED, faceMatchEnabled);
   }
 
   public static boolean isEnforcePendingDelete() {

@@ -1,5 +1,6 @@
 package com.genkey.abisclient.examples.utils;
 
+import com.genkey.abisclient.utils.ABISClientTransformUtils;
 import com.genkey.platform.utils.StringUtils;
 import java.io.FileInputStream;
 import org.slf4j.LoggerFactory;
@@ -8,11 +9,16 @@ public class ExampleTestUtils {
 
 	static org.slf4j.Logger logger = LoggerFactory.getLogger(ExampleTestUtils.class);
 
+	private static final boolean DefaultUseNativeXML=false;
+	
 	public static String DefaultSettingsFile = "partnerExample.ini";
 	public static String OPT_SETTINGS = "abis.partner.settings_file";
 	public static String OPT_CODE_DEFAULT = "abis.partner.useCodeDefault";
+	public static String OPT_USE_NATIVE_XML= "abis.partner.useNativeXML";
 
+	
 	static String CODE_SETTINGS_FILE = "./test/localTest.ini";
+	//static String CODE_SETTINGS_FILE = "./test/remoteTest.ini";
 
 	public static void setSettingsFile(String fileName) {
 		System.setProperty(OPT_SETTINGS, fileName);
@@ -20,6 +26,12 @@ public class ExampleTestUtils {
 
 	public static void loadDefaultSettings() {
 		loadSettings(OPT_SETTINGS, DefaultSettingsFile);
+		postProcessSettings();
+	}
+
+	public static void postProcessSettings() {
+		boolean useNative = getPropertyBoolean(OPT_USE_NATIVE_XML, DefaultUseNativeXML);
+		ABISClientTransformUtils.setUseNativeXML(useNative);
 	}
 
 	/**
@@ -73,6 +85,10 @@ public class ExampleTestUtils {
 		}
 		return value;
 	}
+	
+	public static void setPropertyValue(String propertyName, Object value) {
+		System.setProperty(propertyName, value.toString());
+	}
 
 	public static String getPropertyENV(String propertyName) {
 		String env = asEnv(propertyName);
@@ -120,5 +136,5 @@ public class ExampleTestUtils {
 			ExampleTestUtils.setSettingsFile(settingsFile);
 		}
 	
-	
+	}
 }

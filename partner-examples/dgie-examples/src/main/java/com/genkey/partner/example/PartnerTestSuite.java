@@ -20,8 +20,8 @@ public class PartnerTestSuite extends ExampleSuite {
 	public static boolean flgClientInit = false;
 
 	// Define a settings file
-	// static String SETTINGS_FILE="./test/remoteTest.ini";
-	static String SETTINGS_FILE = "./test/localTest.ini";
+	static String SETTINGS_FILE="./test/remoteTest.ini";
+	//static String SETTINGS_FILE = "./test/localTest.ini";
 
 	// static PropertyMap prop
 

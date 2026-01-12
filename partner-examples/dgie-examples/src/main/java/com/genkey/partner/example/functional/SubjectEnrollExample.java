@@ -12,6 +12,7 @@ import com.genkey.abisclient.service.ImageRequestResponse;
 import com.genkey.abisclient.service.MatchEngineResponse;
 import com.genkey.abisclient.service.RestServices;
 import com.genkey.abisclient.service.TestABISService;
+import com.genkey.abisclient.service.UpdateResponse;
 import com.genkey.abisclient.service.VerifyResponse;
 import com.genkey.abisclient.transport.SubjectEnrollmentReference;
 import com.genkey.partner.biographic.BiographicIdentifier;
@@ -295,6 +296,13 @@ public class SubjectEnrollExample extends FunctionalTestExample {
     standardEnrollExample(EnrollmentSubjectID);
   }
 
+  @Test
+  public void updateExample() {
+    updateExample(EnrollmentSubjectID, TenFingers, false);
+    updateExample(EnrollmentSubjectID, TenFingers, true);
+  }
+  
+  
   public void standardEnrollExample(String biographicId) {
     standardEnrollExample(biographicId, TenFingers);
   }
@@ -668,7 +676,7 @@ public class SubjectEnrollExample extends FunctionalTestExample {
     } else {
       printMessage("Subject " + biographicId + " not available as legacy subject");
 
-      if (!PartnerExample.UseRemote) {
+      if (!PartnerExample.isUseRemote()) {
 
         subject.setTargetFingers(Thumbs);
         EnrollmentUtils.enrollSubject(subject, subjectNumber, 1, 1);
@@ -699,7 +707,7 @@ public class SubjectEnrollExample extends FunctionalTestExample {
         EnrollmentUtils.getBiographicRecord(biographicId, "john", "doe");
 
     // Access the abis service and insert it
-    MatchEngineResponse response = abisService.insertSubject(subject, false);
+    MatchEngineResponse response = abisService.insertSubject(subject, false);;
 
     boolean handleRestFailure = true;
     if (!response.isSuccess() && handleRestFailure) {
@@ -728,4 +736,65 @@ public class SubjectEnrollExample extends FunctionalTestExample {
       handleMatchResults(biographicRecord, response);
     }
   }
+  
+  public void updateExample(
+	      String biographicId, int[] targetFingers, boolean faceMatchEnabled) {
+
+	    int subjectNumber = Integer.valueOf(biographicId);
+	    // Access the services - note there are different ways to access the service
+	    GenkeyABISService abisService = ABISServiceModule.getABISService();
+
+	    String domainName = abisService.getDomainName();
+	    String externalId = BiographicIdentifier.resolveExternalID(biographicId, domainName);
+
+	    while (!abisService.testAvailable()) {
+	      printMessage(
+	          "\nError status "
+	              + abisService.getStatusCode()
+	              + ":"
+	              + abisService.getLastErrorMessage());
+	      Commons.waitMillis(2000);
+	    }
+
+	    // Check ABIS system is also available
+	    String abisConnection = abisService.testABISConnection();
+
+	    printObject("ABIS Connection", abisConnection);
+
+	    SubjectEnrollmentReference subject = new SubjectEnrollmentReference();
+
+	    boolean existsSubject = abisService.existsSubject(biographicId);
+
+	    if (! existsSubject) {
+	      println("Subject " + externalId + " does not exist. Processing as a verification test");
+	      return;
+	    }
+
+	    // complete a 10 finger enrolment
+	    subject.setTargetFingers(targetFingers);
+	    EnrollmentUtils.enrollSubject(subject, subjectNumber, 2, 1);
+
+	    if (faceMatchEnabled) {
+	      EnrollmentUtils.enrollFacePortrait(subject);
+	    }
+
+	    // Access the abis service and insert it
+	    UpdateResponse response = abisService.updateSubject(subject);
+
+	    boolean handleRestFailure = true;
+	    if (!response.isSuccess() && handleRestFailure) {
+	      printMessage(
+	          "Handling REST response failure on insert of "
+	              + biographicId
+	              + " with error code "
+	              + response.getStatusCode());
+	      handleRESTFailure(subject, response, abisService);
+	      return;
+	    } else {
+	      printMessage("Update completed successfully with result " + response.getOperationResult());
+	    }
+
+
+	  }
+  
 }
