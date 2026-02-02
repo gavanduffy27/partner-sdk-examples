@@ -12,6 +12,7 @@ import com.genkey.abisclient.examples.utils.TestDataManager;
 import com.genkey.abisclient.matchengine.MatchEngineConfiguration;
 import com.genkey.abisclient.verification.VerificationEnums.BioHASHGenerationMode;
 import com.genkey.abisclient.verification.VerificationSDK;
+import com.genkey.platform.json.JsonUtils;
 import com.genkey.platform.test.framework.GKTestCase4;
 import com.genkey.platform.utils.ArrayIterator;
 import com.genkey.platform.utils.CollectionUtils;
@@ -384,6 +385,12 @@ public abstract class ExampleModule extends GKTestCase4 implements IExampleTest 
     printMessage(formatObject(object));
   }
 
+  public static void printJsonObject(String header, Object object) {
+	    printHeader(header);
+	    String text = JsonUtils.jsonMarshallPretty(object);
+	    printMessage(text);
+	  }
+  
   public static String printArray(int[] values) {
     return CollectionUtils.containerToString(new ArrayIterator<Integer>(values));
   }

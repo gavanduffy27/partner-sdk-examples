@@ -1,5 +1,7 @@
 package com.genkey.partner.example.functional;
 
+import com.genkey.abisclient.ImageBlob;
+
 /*
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
@@ -13,6 +15,8 @@ import com.genkey.abisclient.ImageData;
 import com.genkey.abisclient.examples.StopWatch;
 import com.genkey.abisclient.examples.utils.TestDataManager;
 import com.genkey.abisclient.service.GenkeyABISService;
+import com.genkey.abisclient.service.params.ImagePortraitPair;
+import com.genkey.abisclient.utils.ABISClientTransformUtils;
 import com.genkey.afis.jaxb.InspectRequest;
 import com.genkey.afis.jaxb.InspectResponse;
 import com.genkey.partner.example.PartnerExample;
@@ -47,6 +51,7 @@ public class DiagnosticExample extends PartnerExample {
 	}
 
 	public void runAllExamples() {
+		testImagePortraitPair();
 		jaxbInstantiationTest();
 		testConfigAccess();
 		// responseParseCheck();
@@ -64,6 +69,21 @@ public class DiagnosticExample extends PartnerExample {
 		} catch (Exception e) {
 			handleException(e);
 		}
+	}
+
+	public void testImagePortraitPair() {
+		ImageBlob blob1 = TestDataManager.getSubjectPortraitBlob(1, 1);
+		ImageBlob blob2 = TestDataManager.getSubjectPortraitBlob(1, 2);
+		ImagePortraitPair portraitPair = ABISClientTransformUtils.asPortraitPair(blob1, blob2);
+		String xmlContent = JAXBMarshallUtils.marshallXML(portraitPair, true);
+		ImagePortraitPair newPair = JAXBMarshallUtils.unmarshallNotStrict(ImagePortraitPair.class, xmlContent);
+		assertJAXBEquals(portraitPair, newPair);
+	}
+
+	private void assertJAXBEquals(Object object1, Object object2) {
+		String text1 = JAXBMarshallUtils.marshallXML(object1, true);
+		String text2 = JAXBMarshallUtils.marshallXML(object2, true);
+		assertEqual(text1, text2);
 	}
 
 	public void testJAXB() {
@@ -190,7 +210,7 @@ public class DiagnosticExample extends PartnerExample {
 		boolean b1 = service.existsSubject(TestSubject1);
 		boolean b2 = service.existsSubject(TestSubject2);
 	}
-	
+
 	@XmlAccessorType(XmlAccessType.FIELD)
 	@XmlRootElement(name = "object")
 	public static class JAXBTestObject {
@@ -227,5 +247,5 @@ public class DiagnosticExample extends PartnerExample {
 		}
 
 	};
-	
+
 }

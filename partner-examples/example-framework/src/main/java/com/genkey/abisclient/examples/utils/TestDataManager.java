@@ -10,6 +10,8 @@ import com.genkey.abisclient.transport.StructuredTemplate;
 import com.genkey.abisclient.transport.SubjectEnrollmentReference;
 import com.genkey.abisclient.verification.AnonymousFusionReference;
 import com.genkey.abisclient.verification.AnonymousReferenceExtractor;
+import com.genkey.afis.jaxb.InspectPortraitImage;
+import com.genkey.afis.jaxb.utils.InspectJAXBUtils;
 import com.genkey.platform.utils.CollectionUtils;
 import com.genkey.platform.utils.Commons;
 import com.genkey.platform.utils.ImageUtils;
@@ -744,5 +746,27 @@ public class TestDataManager {
 		public static String baseName(long subject) {
 			return "S" + subject;
 		}
+	}
+	
+	public static ImageBlob getSubjectPortraitBlob(Object subject, int index) {
+		String imageFile = TestDataManager.getPortraitImageFile(subject, index);
+		return loadImageBlob(imageFile);
+	}
+	
+	public static InspectPortraitImage loadPortrait(String imageFile) {
+		ImageBlob blob = loadImageBlob(imageFile);
+		return InspectJAXBUtils.asInspectPortrait(blob.getImageEncoding(), blob.getImageFormat());
+	}
+
+	public static ImageBlob loadImageBlob(String imageFile) {
+		ImageBlob result=null;
+		try {
+			byte [] imageData = FileUtils.byteArrayFromFile(imageFile);
+			String format = FileUtils.extension(imageFile);
+			result = new ImageBlob(imageData, format);
+		} catch (Exception e) {
+			result=null;
+		}
+		return result;
 	}
 }

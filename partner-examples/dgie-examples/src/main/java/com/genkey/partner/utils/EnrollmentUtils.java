@@ -30,6 +30,7 @@ public class EnrollmentUtils {
 
 	public static String EnrolmentRecordSet = "partner/enrolments";
 
+	
 	public static SubjectEnrollmentReference getLegacyTestSubject() {
 		return enrollSubject(1, PartnerExample.Thumbs, 1, 1);
 	}
@@ -147,6 +148,23 @@ public class EnrollmentUtils {
 			logger.error("Test failure on image access for {}", imageFile);
 		}
 	}
+	
+	
+	public static ImageBlob getSubjectPortrait(String subjectId) {
+		return getSubjectPortrait(subjectId,1);
+	}
+	public static ImageBlob getSubjectPortrait(String subjectId, int index) {
+		String imageFile = TestDataManager.getPortraitImageFile(subjectId, index);
+		ImageBlob result=null;
+		try {
+			byte[] encoding = FileUtils.byteArrayFromFile(imageFile);
+			String format = FileUtils.extension(imageFile);
+			result = new ImageBlob(encoding, format);
+		} catch (Exception e) {
+			logger.error("Test failure on image access for {}", imageFile);			
+		}
+		return result;
+	}
 
 	public static void addCaptureData(SubjectEnrollmentReference enrollmentReference, int[] fingers,
 			List<ImageData> images) {
@@ -200,18 +218,24 @@ public class EnrollmentUtils {
 	}
 
 	public static BiographicProfileRecord getBiographicRecord(String biographicId, String firstName, String lastName) {
+		return getBiographicRecord(biographicId, firstName, lastName, false);
+	}
+	
+	public static BiographicProfileRecord getBiographicRecord(String biographicId, String firstName, String lastName, boolean withFace) {
 		BiographicProfileRecord result = PartnerTestSuite.getBiographicService().createProfileRecord(biographicId);
-		populateTestRecord(result, firstName, lastName);
+		populateTestRecord(result, firstName, lastName, withFace);
 		return result;
 	}
 
-	public static void populateTestRecord(BiographicProfileRecord record, String firstName, String lastName) {
+	public static void populateTestRecord(BiographicProfileRecord record, String firstName, String lastName, boolean withFace) {
 		record.setFirstName(firstName);
 		record.setLastName(lastName);
 		// BufferedImage passport = readResourceImage("passport.jpg");
 		byte[] resourceData = readResourceBytes("passport.jpg");
-		ImageBlob blob = new ImageBlob(resourceData, ImageUtils.EXT_JPEG);
-		record.setPortrait(blob);
+		if (withFace) {
+			ImageBlob faceBlob = getSubjectPortrait(record.getBiographicID());
+			record.setPortrait(faceBlob);			
+		}
 		record.setAttributeBytes("passport_jpg", resourceData);
 	}
 

@@ -7,6 +7,7 @@ import com.genkey.abisclient.service.ABISResponse;
 import com.genkey.abisclient.service.MatchEngineResponse;
 import com.genkey.abisclient.service.UpdateResponse;
 import com.genkey.abisclient.service.VerifyResponse;
+import com.genkey.abisclient.service.params.ParameterStatus;
 import com.genkey.abisclient.transport.SubjectEnrollmentReference;
 import com.genkey.partner.biographic.BiographicProfileRecord;
 import com.genkey.partner.biographic.BiographicService;
@@ -101,5 +102,10 @@ public abstract class FunctionalTestExample extends PartnerExample {
 
 	protected void examineMatchResult(String subjectManifest, String matchManifest, ImageBlob subjectPortrait,
 			ImageBlob matchPortrait) {
+	}
+
+	protected void displayParameterStatus(ParameterStatus parameterStatus) {
+		String message = String.format("Status %d:%s", parameterStatus.getStatusCode(), parameterStatus.getErrorMessage());
+		println(message);
 	}
 }
