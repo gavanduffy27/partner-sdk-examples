@@ -5,7 +5,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.genkey.dgie.examples</groupId>
 	<artifactId>partner-examples</artifactId>
-	<version>6.2.2-RELEASE</version>
+	<version>6.3-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<name>partner-examples</name>
 	<url>http://maven.apache.org</url>
@@ -41,10 +41,11 @@
 	</scm>
 	<properties>
 		<partner.sdk.version>${project.version}</partner.sdk.version>
+		<partner.sdk.groupId>com.genkey.partnersdk</partner.sdk.groupId>
+
 		<!--
 		<partner.sdk.groupId>com.genkey.partner</partner.sdk.groupId>
-	 	-->
-		<partner.sdk.groupId>com.genkey.partnersdk</partner.sdk.groupId>
+		-->
 	</properties>
 
 	<dependencyManagement>
