@@ -127,8 +127,6 @@ public abstract class PartnerExample extends ExampleModule {
 
   @Override
   protected void tearDown() {
-    // TODO Auto-generated method stub
-
     super.tearDown();
     FormatUtils.printBanner(
         " Waiting " + getTearDownPauseTime() / 1000.0 + " seconds before shutdown");
