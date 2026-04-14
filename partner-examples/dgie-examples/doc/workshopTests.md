@@ -13,7 +13,7 @@
 
 # Preparation tasks for Code examples
 
-	1	Access to sources
+	1	Access to sources    ** DONE **
 	2	Installation and access to native libraries
 	3	Installation and access of Java Jar libraries from maven
 	4	Access to test-data from ist_config.zip
