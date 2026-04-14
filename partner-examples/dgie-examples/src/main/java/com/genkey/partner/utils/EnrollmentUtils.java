@@ -40,7 +40,7 @@ public class EnrollmentUtils {
 		SubjectEnrollmentReference result = new SubjectEnrollmentReference();
 		result.setTargetFingers(fingers);
 		result.setSubjectID(String.valueOf(subjectId));
-		enrollSubject(result, subjectId, startSample, maxSamples);
+		enrollFingerPrintSubject(result, subjectId, startSample, maxSamples);
 
 		return result;
 	}
@@ -111,7 +111,7 @@ public class EnrollmentUtils {
 	 * @param startSample
 	 * @param maxSamples
 	 */
-	public static void enrollSubject(SubjectEnrollmentReference result, int subjectId, int startSample,
+	public static void enrollFingerPrintSubject(SubjectEnrollmentReference result, int subjectId, int startSample,
 			int maxSamples) {
 
 		result.setSubjectID(String.valueOf(subjectId));
@@ -137,8 +137,12 @@ public class EnrollmentUtils {
 	}
 
 	public static void enrollFacePortrait(SubjectEnrollmentReference subjectReference) {
+		enrollFacePortrait(subjectReference, 1);
+	}
+	
+	public static void enrollFacePortrait(SubjectEnrollmentReference subjectReference, int sampleId) {
 		String subjectId = subjectReference.getSubjectID();
-		String imageFile = TestDataManager.getPortraitImageFile(subjectId);
+		String imageFile = TestDataManager.getPortraitImageFile(subjectId, sampleId);
 		try {
 			byte[] encoding = FileUtils.byteArrayFromFile(imageFile);
 			String format = FileUtils.extension(imageFile);

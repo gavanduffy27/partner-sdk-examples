@@ -259,7 +259,7 @@ public class SubjectEnrollExample extends FunctionalTestExample {
 
 			int[] legacyFingers = legacyService.existsSubjectRecord(biographicId);
 			subject.setTargetFingers(legacyFingers);
-			EnrollmentUtils.enrollSubject(subject, subjectNumber, 1, 1);
+			EnrollmentUtils.enrollFingerPrintSubject(subject, subjectNumber, 1, 1);
 
 			VerifyResponse verifyResponse = legacyService.verifySubject(subject);
 			double matchScore = verifyResponse.getMatchResult().getMatchScore();
@@ -398,12 +398,12 @@ public class SubjectEnrollExample extends FunctionalTestExample {
 		}
 		// Enroll from first sample
 		enrollRef.setTargetFingers(SixFingers);
-		EnrollmentUtils.enrollSubject(enrollRef, subjectNumber, 1, 1);
+		EnrollmentUtils.enrollFingerPrintSubject(enrollRef, subjectNumber, 1, 1);
 
 		SubjectEnrollmentReference duplicateRef = new SubjectEnrollmentReference();
 		// Enroll from first sample
 		duplicateRef.setTargetFingers(SixFingers);
-		EnrollmentUtils.enrollSubject(duplicateRef, subjectNumber, 2, 1);
+		EnrollmentUtils.enrollFingerPrintSubject(duplicateRef, subjectNumber, 2, 1);
 		String duplicateId = biographicId + "_dup";
 		duplicateRef.setSubjectID(duplicateId);
 
@@ -656,7 +656,7 @@ public class SubjectEnrollExample extends FunctionalTestExample {
 
 			int[] legacyFingers = legacyService.existsSubjectRecord(biographicId);
 			subject.setTargetFingers(legacyFingers);
-			EnrollmentUtils.enrollSubject(subject, subjectNumber, 1, 1);
+			EnrollmentUtils.enrollFingerPrintSubject(subject, subjectNumber, 1, 1);
 
 			VerifyResponse verifyResponse = legacyService.verifySubject(subject);
 
@@ -670,7 +670,7 @@ public class SubjectEnrollExample extends FunctionalTestExample {
 			if (!PartnerExample.isUseRemote()) {
 
 				subject.setTargetFingers(Thumbs);
-				EnrollmentUtils.enrollSubject(subject, subjectNumber, 1, 1);
+				EnrollmentUtils.enrollFingerPrintSubject(subject, subjectNumber, 1, 1);
 
 				// forceTestDomain(subject);
 				String subjectId = subject.getSubjectID();
@@ -687,7 +687,7 @@ public class SubjectEnrollExample extends FunctionalTestExample {
 
 		// complete a 10 finger enrolment
 		subject.setTargetFingers(targetFingers);
-		EnrollmentUtils.enrollSubject(subject, subjectNumber, 1, 1);
+		EnrollmentUtils.enrollFingerPrintSubject(subject, subjectNumber, 1, 1);
 
 		if (faceMatchEnabled) {
 			EnrollmentUtils.enrollFacePortrait(subject);
@@ -761,7 +761,7 @@ public class SubjectEnrollExample extends FunctionalTestExample {
 
 		// complete a 10 finger enrolment
 		subject.setTargetFingers(targetFingers);
-		EnrollmentUtils.enrollSubject(subject, subjectNumber, 2, 1);
+		EnrollmentUtils.enrollFingerPrintSubject(subject, subjectNumber, 2, 1);
 
 		if (faceMatchEnabled) {
 			EnrollmentUtils.enrollFacePortrait(subject);
