@@ -11,19 +11,31 @@ public class ExampleTestUtils {
 
 	private static final boolean DefaultUseNativeXML=false;
 	
+	
 	public static String DefaultSettingsFile = "partnerExample.ini";
+	
 	public static String OPT_SETTINGS = "abis.partner.settings_file";
+	
+	/**
+	 * Property to set whether or not to use the Code Default file
+	 */
 	public static String OPT_CODE_DEFAULT = "abis.partner.useCodeDefault";
+	
+	// If true use native XML generation from C++ code,
 	public static String OPT_USE_NATIVE_XML= "abis.partner.useNativeXML";
 
-	
+
+	// Default code settings file to be used when OPT_CODE_DEFAULT=1
 	static String CODE_SETTINGS_FILE = "./test/localTest.ini";
-	//static String CODE_SETTINGS_FILE = "./test/remoteTest.ini";
 
 	public static void setSettingsFile(String fileName) {
 		System.setProperty(OPT_SETTINGS, fileName);
 	}
 
+	/**
+	 * Load the default settings for initialisation as either the value of abis.partner.settings_file
+	 * or the default file parternExample.ini
+	 */
 	public static void loadDefaultSettings() {
 		loadSettings(OPT_SETTINGS, DefaultSettingsFile);
 		postProcessSettings();
