@@ -15,10 +15,11 @@
 
 	1	Access to sources    ** DONE **
 	2	Installation and access to native libraries  ** DONE **
-	3	Installation and access of Java Jar libraries from maven
-	4	Access to test-data from ist_config.zip
-	5	Access to runtime WIBU license
-	6	Validation test
+	3	Installation and access of Java Jar libraries from maven  **DONE **
+	4	Access to test-data from ist_config.zip		**DONE **
+	5	Access to runtime WIBU license		** DONE **
+	5	Build Partner examples in Maven		
+	6	Run partner example inside IDE of choice				
 		
 		
 
@@ -105,6 +106,18 @@ To access the images from example programs then define the variable IST_CONFIG_H
 point to the root folder where ist-config.zip is unpacked
 
 	IST_CONFIG_HOME=D:\releases\partnerSDK\ist_config	
+
+To test:
+
+From a command shell run the following command
+
+	dir %IST_CONFIG_HOME%\images\abisClientBMP
+
+Or in a bash shell
+
+	ls $IST_CONFIG_HOME/abisClientBMP
+
+If you see results it works.
 
 ## Codemeter license availability
 
