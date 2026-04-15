@@ -12,7 +12,7 @@ public class ExampleTestUtils {
 	private static final boolean DefaultUseNativeXML=false;
 	
 	
-	public static String DefaultSettingsFile = "partnerExample.ini";
+	public static String DefaultSettingsFile = "./partnerExample.ini";
 	
 	public static String OPT_SETTINGS = "abis.partner.settings_file";
 	
