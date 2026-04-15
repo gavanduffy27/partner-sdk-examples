@@ -57,7 +57,11 @@ public abstract class ExampleModule extends GKTestCase4 implements IExampleTest 
 
   public static String V1Left = "v1-left";
   public static String V2Left = "v2-left";
+  public static String V1Right = "v1-right";
+  public static String V2Right = "v2-right";
 
+  public static String Thumbs01 = "Thumbs_01";
+  
   String previousDirectory = null;
 
   protected static String ImageSetPath(String setName) {

@@ -1,11 +1,13 @@
 package com.genkey.partner.utils;
 
 import com.genkey.abisclient.ImageBlob;
+import com.genkey.abisclient.ImageContext;
 import com.genkey.abisclient.ImageData;
 import com.genkey.abisclient.examples.utils.TestDataManager;
 import com.genkey.abisclient.transport.FingerEnrollmentReference;
 import com.genkey.abisclient.transport.SubjectEnrollmentReference;
 import com.genkey.partner.biographic.BiographicProfileRecord;
+import com.genkey.partner.biographic.BiographicProfileRecord.Gender;
 import com.genkey.partner.example.PartnerExample;
 import com.genkey.partner.example.PartnerTestSuite;
 import com.genkey.platform.utils.CollectionUtils;
@@ -17,6 +19,7 @@ import com.genkey.platform.utils.ResourceUtils;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -202,6 +205,32 @@ public class EnrollmentUtils {
 		}
 	}
 
+	public static Map<Integer,ImageData> extractImageSegments(ImageData image, int [] fingers, boolean useDetected) {
+		ImageContext imageContext = new ImageContext(image, fingers);
+		int [] detectedFingers = imageContext.getDetectedFingers();
+		if (! Arrays.equals(fingers, detectedFingers)) {
+			if (useDetected) {
+				// Note in practice this might be a warning and the operator would resolve 
+				fingers=detectedFingers;
+			}
+		}
+		Map<Integer, ImageData> imageMap = CollectionUtils.newMap();
+		for(int ix=0; ix < imageContext.count() ; ix++) {
+			ImageData imageData = imageContext.extractImageSegment(ix, true);
+			int fingerId = fingers[ix];
+			imageMap.put(fingerId, imageData);
+		}
+		return imageMap;
+	}
+	
+	public static void addCaptureData(SubjectEnrollmentReference enrollmentReference, byte[] imageEncoding, String format, 
+			int [] fingers, boolean useDetected) {
+		ImageData imageData = new ImageData(imageEncoding, format);
+		Map<Integer, ImageData> imageSegmentMap = extractImageSegments(imageData, fingers, useDetected);
+		addCaptureData(enrollmentReference, imageSegmentMap);
+	}
+	
+	
 	// public static void enrollSubject()
 
 	public static BiographicProfileRecord getSimpleBiographicRecord(String biographicId, String firstName,
@@ -234,6 +263,7 @@ public class EnrollmentUtils {
 	public static void populateTestRecord(BiographicProfileRecord record, String firstName, String lastName, boolean withFace) {
 		record.setFirstName(firstName);
 		record.setLastName(lastName);
+		record.setGenderType(Gender.Male);
 		// BufferedImage passport = readResourceImage("passport.jpg");
 		byte[] resourceData = readResourceBytes("passport.jpg");
 		if (withFace) {
