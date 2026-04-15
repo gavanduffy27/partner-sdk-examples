@@ -18,7 +18,8 @@
 	3	Installation and access of Java Jar libraries from maven  **DONE **
 	4	Access to test-data from ist_config.zip		**DONE **
 	5	Access to runtime WIBU license		** DONE **
-	5	Build Partner examples in Maven		
+	5	Build Partner examples in Maven			**DONE **
+	
 	6	Run partner example inside IDE of choice				
 		
 		
@@ -80,6 +81,7 @@ Both JAR files are required for the partner examples.
 				-Dversion=6.3-SNAPSHOT 
 				-Dpackaging=jar 
 				-DcreateChecksum=true
+				-DgeneratePom=true
 
 The partner examples use a maven build file that assumes the above are installed with the above groupID/artifactId and with version compatible to the partner-examples/
 
@@ -166,6 +168,7 @@ If the build runs successfully then the maven dependencies are correctly install
 
 ## Install validation	
 
+Create a project within IDE for all projects under partner-examples
 
 	
 	
