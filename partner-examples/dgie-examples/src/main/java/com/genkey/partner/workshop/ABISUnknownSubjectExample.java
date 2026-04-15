@@ -75,6 +75,7 @@ public class ABISUnknownSubjectExample extends BMSWorkshopExample{
 		for (MatchResult result : matchResults) {
 			String matchId = result.getSubjectID();
 			BiographicProfileRecord biographicRecord = biographicService.fetchBiographicRecord(matchId);
+			double faceScore = result.getFaceScore();
 			ImageBlob matchFace = biographicRecord.getPortrait();
 			if ( super.adjudicateCheck(querySubjectPortrait, matchFace)) {
 				isDuplicate=true;
@@ -96,8 +97,8 @@ public class ABISUnknownSubjectExample extends BMSWorkshopExample{
 		// Enroll from first sample
 		enrollRef.setTargetFingers(TenFingers);
 		int startSample=1;
-		int numSamples=1;
-		EnrollmentUtils.enrollFingerPrintSubject(enrollRef, subjectId, startSample, numSamples);
+		int maxPresentations=1;
+		EnrollmentUtils.enrollFingerPrintSubject(enrollRef, subjectId, startSample, maxPresentations);
 		
 		MatchEngineResponse response = abisService.querySubject(enrollRef);
 		

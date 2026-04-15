@@ -51,6 +51,14 @@ public class ABISKnownExample extends BMSWorkshopExample{
 			response = abisService.verifySubject(enrollRef);			
 		}
 		
+		if (!response.isVerified()) {
+			enrollRef.setTargetFingers(RightHandFingers);
+			EnrollmentUtils.enrollFingerPrintSubject(enrollRef, subjectNumber, sampleIndex, 1);
+			
+			// Just repeat verification with additional biometric data
+			response = abisService.verifySubject(enrollRef);			
+			
+		}
 		
 		if (response.isVerified() && updateIfMatch) {
 			UpdateResponse updateResponse = abisService.updateSubject(enrollRef);
