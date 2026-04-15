@@ -7,6 +7,7 @@ import com.genkey.abisclient.matchengine.MatchResult;
 import com.genkey.abisclient.service.ABISServiceModule;
 import com.genkey.abisclient.service.GenkeyABISService;
 import com.genkey.abisclient.service.MatchEngineResponse;
+import com.genkey.abisclient.service.params.EnquireStatus;
 import com.genkey.abisclient.transport.SubjectEnrollmentReference;
 import com.genkey.partner.biographic.BiographicProfileRecord;
 import com.genkey.partner.biographic.BiographicService;
@@ -27,19 +28,27 @@ public class ABISUnknownSubjectExample extends BMSWorkshopExample{
 	}
 	
 	protected void runAllExamples() {
-		queryFaceExample(1);
+		queryFaceExample();
 		queryFingerExample();
 		queryBothExample();
 		insertExample();
 	}
 
-	public void queryFaceExample(int i) {
-		queryFaceExample(TestSubject, true);
+	public void queryFaceExample() {
+		queryFaceExample(TestSubject);
+	}
+
+	public void queryFaceExample(String testSubject) {
+		queryFaceExample(testSubject, false);
 	}
 	
 
 	public void queryFaceExample(String biographicID, boolean insertIfNoMatch) {
 		GenkeyABISService abisService = ABISServiceModule.getABISService();
+		EnquireStatus status = abisService.enquireSubject(biographicID);
+		if (status.existsSubject()) {
+			return;
+		}
 		SubjectEnrollmentReference enrollRef = new SubjectEnrollmentReference();
 		enrollRef.setSubjectID(biographicID);
 		EnrollmentUtils.enrollFacePortrait(enrollRef, 1);
@@ -51,7 +60,7 @@ public class ABISUnknownSubjectExample extends BMSWorkshopExample{
 			matchesFound=false;
 		}
 		if (insertIfNoMatch && ! matchesFound) {
-			// proceeed with enrollment
+			this.insertTestSubject(biographicID, true);
 		}
 		
 	}
@@ -75,11 +84,12 @@ public class ABISUnknownSubjectExample extends BMSWorkshopExample{
 	}
 
 	public void queryFingerExample() {
-		queryFingerExample(1, false, false);
+		queryFingerExample(TestSubject, false, false);
 	}
 	
-	public void queryFingerExample(int subjectId, boolean vetoMatch, boolean insertIfNoMatch) {
+	public void queryFingerExample(String biographicId, boolean vetoMatch, boolean insertIfNoMatch) {
 		
+		int subjectId = Integer.valueOf(biographicId);
 		GenkeyABISService abisService = ABISServiceModule.getABISService();
 		
 		SubjectEnrollmentReference enrollRef = new SubjectEnrollmentReference();		
@@ -107,16 +117,17 @@ public class ABISUnknownSubjectExample extends BMSWorkshopExample{
 		
 		if ( ! matchesFound && insertIfNoMatch) {
 			// proceed with enrollment
-			insertTestSubject(subjectId, true);
+			insertTestSubject(biographicId, true);
 		}
 		
 	}
 
 	public void queryBothExample() {
-		queryBothExample(1, false, true);
+		queryBothExample(TestSubject, false, true);
 	}
 
-	public void queryBothExample(int subjectId, boolean vetoMatch, boolean insertIfNoMatch) {
+	public void queryBothExample(String biographicId, boolean vetoMatch, boolean insertIfNoMatch) {
+		int subjectId = Integer.valueOf(biographicId);
 		GenkeyABISService abisService = ABISServiceModule.getABISService();
 		
 		SubjectEnrollmentReference enrollRef = new SubjectEnrollmentReference();		
@@ -147,25 +158,27 @@ public class ABISUnknownSubjectExample extends BMSWorkshopExample{
 		} 
 		
 		if ( ! matchesFound && insertIfNoMatch) {
-			insertTestSubject(subjectId, true);
+			insertTestSubject(biographicId, true);
 		}
 		
 	}
 	
 	public void insertExample() {
-		insertTestSubject(1, true);
+		insertTestSubject(TestSubject, true);
 	}
 
-	public void insertTestSubject(int subjectId, boolean withFace) {
+	public void insertTestSubject(String biographicId, boolean withFace) {
 		// Some kind of biographic record
+		int subjectId = Integer.valueOf(biographicId);
+
 		GenkeyABISService abisService = ABISServiceModule.getABISService();
 		BiographicService biographicService = DGIEServiceModule.getBiographicService();
 		
 		BiographicProfileRecord record = EnrollmentUtils.getBiographicRecord(String.valueOf(subjectId), "John", "Brown");		
 		
-		SubjectEnrollmentReference enrollRef = new SubjectEnrollmentReference();
-		enrollRef.setSubjectID(String.valueOf(subjectId));
+		SubjectEnrollmentReference enrollRef = new SubjectEnrollmentReference(biographicId);
 		enrollRef.setTargetFingers(TenFingers);
+
 		int sampleIndex=1;
 		int numSamples=1;
 		EnrollmentUtils.enrollFingerPrintSubject(enrollRef, subjectId, sampleIndex, numSamples);

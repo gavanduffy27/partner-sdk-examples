@@ -29,12 +29,7 @@ public abstract class PartnerExample extends ExampleModule {
 
   protected static String LocalServiceHost = "abis.production"; // 10.11.11.28";
   protected static String LocalServiceHostDR = "abis.dr"; // 10.11.11.28";
-  // protected static String RemoteServiceHost = "10.22.74.51";
-  protected static String RemoteServiceHost = "abis.production.remote";
-  protected static final String RemoteLegacyHost =
-      RemoteServiceHost; // "DGIETestHost"; //10.22.72.51";
-  protected static final String RemoteServiceHostDR = RemoteServiceHost; // "10.22.174.51";
-
+  
   static boolean DeletesPending = false;
 
   static boolean FaceMatchEnabled = true;
@@ -48,19 +43,13 @@ public abstract class PartnerExample extends ExampleModule {
   protected static boolean UseDR = false;
 
   public static String LocalPrimaryHost = UseDR ? LocalServiceHostDR : LocalServiceHost;
-  public static String RemotePrimaryHost = UseDR ? RemoteServiceHostDR : RemoteServiceHost;
   public static String LocalSecondaryHost = UseDR ? LocalServiceHost : LocalServiceHostDR;
-  public static final String RemoteSecondaryHost = UseDR ? RemoteServiceHost : RemoteServiceHostDR;
 
-  private static final String ServiceHost = FlgRemote ? RemotePrimaryHost : LocalPrimaryHost;
-  private static final String FailoverHost = FlgRemote ? RemoteSecondaryHost : LocalSecondaryHost;
-  private static final String LegacyServiceHost = ServiceHost;
   private static final int ServicePortLocal = 9091;
   private static final int ServicePortRemote = 8091;
-  private static final int ServicePort = FlgRemote ? ServicePortRemote : ServicePortLocal;
-  private static final int ABISPort = 0;
   private static final String DomainName = "EnrollmentSDK";
   private static final String TestDomain = "test";
+private static final String RemotePrimaryHost = "genkey.abis.remote";
   
   public static int[] FourFingers = Commons.generateRangeV(2, 3, 7, 8);
 
@@ -94,11 +83,11 @@ public abstract class PartnerExample extends ExampleModule {
   }
 
   public static String getSecondaryHost() {
-    return ExampleTestUtils.getPropertyValue(OPT_HOSTNAME_DR, RemoteSecondaryHost);
+    return ExampleTestUtils.getPropertyValue(OPT_HOSTNAME_DR, null);
   }
 
   public static String getLegacyHost() {
-    return ExampleTestUtils.getPropertyValue(OPT_HOSTNAME_LEGACY, LegacyServiceHost);
+    return ExampleTestUtils.getPropertyValue(OPT_HOSTNAME_LEGACY, null);
   }
 
   public static int getServicePort() {

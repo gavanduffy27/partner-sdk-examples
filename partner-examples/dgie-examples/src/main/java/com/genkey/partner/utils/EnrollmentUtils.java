@@ -112,7 +112,7 @@ public class EnrollmentUtils {
 	 * @param maxSamples
 	 */
 	public static void enrollFingerPrintSubject(SubjectEnrollmentReference result, int subjectId, int startSample,
-			int maxSamples) {
+			int maxPresentations) {
 
 		result.setSubjectID(String.valueOf(subjectId));
 
@@ -125,7 +125,7 @@ public class EnrollmentUtils {
 
 		int nSamples = 0;
 		int sampleIndex = startSample;
-		while (!result.isComplete() && nSamples < maxSamples) {
+		while (!result.isComplete() && nSamples < maxPresentations) {
 			int[] fingers = result.getFingersIncomplete();
 			// List<ImageData> images2 = TestDataManager.loadImages(subjectId, fingers,
 			// sampleIndex);
