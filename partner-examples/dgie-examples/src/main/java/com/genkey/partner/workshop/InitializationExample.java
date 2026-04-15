@@ -1,5 +1,7 @@
 package com.genkey.partner.workshop;
 
+import java.io.File;
+
 import com.genkey.abisclient.examples.utils.ExampleTestUtils;
 import com.genkey.abisclient.service.ABISServiceModule;
 import com.genkey.abisclient.service.GenkeyABISService;
@@ -29,6 +31,13 @@ public class InitializationExample extends BMSWorkshopExample {
 	
 	@Override
 	protected void setUp() {
+		File file = new File(".");
+		try {
+			String currentDirectory = file.getCanonicalPath();
+			printResult("Current path",currentDirectory);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		// to block default test setup
 		//super.setUp();
 	}
