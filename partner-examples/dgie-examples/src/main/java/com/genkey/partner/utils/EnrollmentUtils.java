@@ -207,23 +207,28 @@ public class EnrollmentUtils {
 
 	public static Map<Integer,ImageData> extractImageSegments(ImageData image, int [] fingers, boolean useDetected) {
 		ImageContext imageContext = new ImageContext(image, fingers);
+		/*
 		int [] detectedFingers = imageContext.getDetectedFingers();
+		
+		boolean isConsistent = imageContext.isFingersConsistent();
+		
 		if (! Arrays.equals(fingers, detectedFingers)) {
-			if (useDetected) {
-				// Note in practice this might be a warning and the operator would resolve 
+			if (useDetected && ! imageContext.isFingersConsistent()) {
 				fingers=detectedFingers;
 			}
 		}
+		*/
+		int realFingerIds [] = imageContext.getFingers();
 		Map<Integer, ImageData> imageMap = CollectionUtils.newMap();
 		for(int ix=0; ix < imageContext.count() ; ix++) {
 			ImageData imageData = imageContext.extractImageSegment(ix, true);
-			int fingerId = fingers[ix];
+			int fingerId = realFingerIds[ix];
 			imageMap.put(fingerId, imageData);
 		}
 		return imageMap;
 	}
 	
-	public static void addCaptureData(SubjectEnrollmentReference enrollmentReference, byte[] imageEncoding, String format, 
+	public static void addSegmentationImage(SubjectEnrollmentReference enrollmentReference, byte[] imageEncoding, String format, 
 			int [] fingers, boolean useDetected) {
 		ImageData imageData = new ImageData(imageEncoding, format);
 		Map<Integer, ImageData> imageSegmentMap = extractImageSegments(imageData, fingers, useDetected);

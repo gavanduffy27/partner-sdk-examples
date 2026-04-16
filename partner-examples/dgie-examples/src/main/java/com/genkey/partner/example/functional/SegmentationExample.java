@@ -105,9 +105,11 @@ public class SegmentationExample extends PartnerExample {
   public void testSegmentation2(String fileName, int[] fingers, boolean useDetected) {
     // String imageName = "kojak_image.bmp";
     ImageData imageData = null;
+    int [] detectedFingers;
     String imageName = FileUtils.baseName(fileName);
     try {
-      imageData = new ImageData(Files.readAllBytes(new File(fileName).toPath()), "bmp");
+    	byte [] encoding = FileUtils.byteArrayFromFile(fileName);
+      imageData = new ImageData(encoding, "bmp");
     } catch (IOException e1) {
       e1.printStackTrace();
     }
@@ -115,7 +117,8 @@ public class SegmentationExample extends PartnerExample {
 
     ImageContext context = new ImageContext(imageData, fingers);
     if (useDetected) {
-      fingers = context.getDetectedFingers();
+    	detectedFingers = context.getDetectedFingers();
+    	printResult("Detected", detectedFingers);
     }
 
     int nFingers = context.count();

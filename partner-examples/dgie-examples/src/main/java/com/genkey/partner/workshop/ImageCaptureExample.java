@@ -47,7 +47,7 @@ public class ImageCaptureExample extends BMSWorkshopExample {
     ImageBlob imageData = TestDataManager.loadImageBlob(imageFile);
     byte[] encoding = imageData.getImageEncoding();
     String format = imageData.getImageFormat();
-    EnrollmentUtils.addCaptureData(reference, encoding, format, LeftHandFingers, true);
+    EnrollmentUtils.addSegmentationImage(reference, encoding, format, LeftHandFingers, true);
 
     MatchEngineResponse response = abisService.querySubject(reference);
 
@@ -64,7 +64,7 @@ public class ImageCaptureExample extends BMSWorkshopExample {
     ImageBlob imageData2 = TestDataManager.loadImageBlob(imageFile2);
     byte[] encoding2 = imageData2.getImageEncoding();
     String format2 = imageData2.getImageFormat();
-    EnrollmentUtils.addCaptureData(reference, encoding2, format2, RightHandFingers, true);
+    EnrollmentUtils.addSegmentationImage(reference, encoding2, format2, RightHandFingers, true);
 
     // Perform ABIS operation
     MatchEngineResponse response3 = abisService.querySubject(reference);
@@ -75,7 +75,7 @@ public class ImageCaptureExample extends BMSWorkshopExample {
     ImageBlob imageData3 = TestDataManager.loadImageBlob(imageFile3);
     byte[] encoding3 = imageData3.getImageEncoding();
     String format3 = imageData3.getImageFormat();
-    EnrollmentUtils.addCaptureData(reference, encoding3, format3, Thumbs, true);
+    EnrollmentUtils.addSegmentationImage(reference, encoding3, format3, Thumbs, true);
 
     // Perform ABIS operation
     MatchEngineResponse response4 = abisService.querySubject(reference);
