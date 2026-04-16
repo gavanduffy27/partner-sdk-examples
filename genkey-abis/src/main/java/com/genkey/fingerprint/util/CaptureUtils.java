@@ -10,13 +10,15 @@ import com.genkey.abisclient.ImageContext;
 import com.genkey.abisclient.ImageData;
 import com.genkey.abisclient.transport.FingerEnrollmentReference;
 import com.genkey.fingerprint.model.CaptureResult;
+import com.genkey.fingerprint.model.FingerprintData;
 import com.genkey.platform.utils.CollectionUtils;
 
 public class CaptureUtils {
 	
 
-	private static final String FORMAT_RAW = "RAW";
+	public static final String FORMAT_RAW = "RAW";
 
+	
 	public static ImageData asImageData(CaptureResult captureResult) {
 		String format  = captureResult.getImageFormat();
 		ImageData result;
@@ -27,6 +29,17 @@ public class CaptureUtils {
 		}
 		return result;
 	}
+	
+	public static ImageData asImageData(FingerprintData fpData) {
+		ImageData result;
+		if (fpData.getImageFormat().equals(CaptureUtils.FORMAT_RAW)) {
+			result= new ImageData(fpData.getWidth(), fpData.getHeight(), fpData.getImageData(), fpData.getResolution());
+		} else {
+			result = new ImageData(fpData.getImageData(), fpData.getImageFormat());
+		}
+		return result;
+	}
+	
 	
 	public static List<CaptureResult> segmentCaptureResult(MultipleFingerCaptureResult multiCaptureResult, int [] fingers) {
 		
