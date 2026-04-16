@@ -87,7 +87,7 @@ public class FingerprintController {
     @PostMapping("/capture/multiple")
     @Operation(summary = "Capture multiple fingerprints", description = "Capture fingerprints for multiple fingers")
     public ResponseEntity<List<CaptureResult>> captureMultiple(@RequestBody int[] fingers) {
-        List<CaptureResult> results = captureService.captureMultipleFingers(fingers);
+        List<CaptureResult> results = captureService.captureMultipleFingersSlap(fingers);
         
         // Encode image data as base64
         for (CaptureResult result : results) {

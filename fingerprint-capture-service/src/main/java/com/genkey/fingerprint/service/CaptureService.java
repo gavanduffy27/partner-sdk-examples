@@ -3,6 +3,8 @@ package com.genkey.fingerprint.service;
 import com.genkey.fingerprint.config.AbisConfig;
 import com.genkey.fingerprint.model.*;
 import com.genkey.fingerprint.scanner.FingerprintScanner;
+import com.genkey.fingerprint.util.CaptureUtils;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -69,6 +71,10 @@ public class CaptureService {
         
         CaptureResult result = null;
         
+        CaptureResult bestResult=null;
+        
+        // GD Modified this loop to maintain the best result
+        
         for (int attempt = 1; attempt <= maxRetries; attempt++) {
             log.info("Capture attempt {} of {} for finger {}", attempt, maxRetries, finger);
             
@@ -85,21 +91,42 @@ public class CaptureService {
             } else {
                 log.warn("Capture failed: {}", result.getStatusMessage());
             }
+            if (bestResult == null || result.getQuality() > bestResult.getQuality()) {
+            	bestResult=result;
+            }
         }
         
-        // Return last result even if quality is low
-        if (result != null && result.isSuccess()) {
+        // Return BEST not last result even if quality is low
+        if (bestResult != null && bestResult.isSuccess()) {
             log.warn("Returning capture with quality {} (below threshold {})", 
-                    result.getQuality(), qualityThreshold);
+            bestResult.getQuality(), qualityThreshold);
         }
         
-        return result;
+        return bestResult;
     }
+
+	public MultipleFingerCaptureResult captureMultipleFingerImage(int [] fingers) {
+    	
+    	return scanner.captureMultiple(fingers, config.getCapture().getTimeout());
+    }
+    
+    
+    /**
+     * Replacement function for managing a segment image based on raw image capture and
+     * a segmentation.
+     * @param fingers
+     * @return
+     */
+    public List<CaptureResult> captureMultipleFingersSlap(int[] fingers) {
+    	MultipleFingerCaptureResult captureResult = captureMultipleFingerImage(fingers);
+    	List<CaptureResult> result = CaptureUtils.segmentCaptureResult(captureResult, captureResult.getFingers());
+    	return result;
+    }    
     
     /**
      * Capture multiple fingerprints
      */
-    public List<CaptureResult> captureMultipleFingers(int[] fingers) {
+    public List<CaptureResult> captureMultipleFingersOneByOne(int[] fingers) {
         List<CaptureResult> results = new ArrayList<>();
         
         for (int finger : fingers) {
@@ -270,7 +297,7 @@ public class CaptureService {
         log.info("STARTING MULTIPLE FINGER CAPTURE FOR FINGERS: {}", Arrays.toString(fingers));
         log.info("Please place fingers on the scanner...");
         
-        List<CaptureResult> captureResults = captureMultipleFingers(fingers);
+        List<CaptureResult> captureResults = captureMultipleFingersOneByOne(fingers);
         
         for (CaptureResult captureResult : captureResults) {
             if (!captureResult.isSuccess()) {

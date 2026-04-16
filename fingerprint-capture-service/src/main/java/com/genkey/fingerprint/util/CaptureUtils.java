@@ -1,68 +1,117 @@
 package com.genkey.fingerprint.util;
 
-import com.genkey.fingerprint.model.CaptureResult;
-import com.genkey.fingerprint.model.MultipleFingerCaptureResult;
-import lombok.extern.slf4j.Slf4j;
-
-import java.util.ArrayList;
+import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-/**
- * Utility class for processing fingerprint capture results
- */
-@Slf4j
+import com.genkey.abisclient.ImageBlob;
+import com.genkey.abisclient.ImageContext;
+import com.genkey.abisclient.ImageData;
+import com.genkey.abisclient.transport.FingerEnrollmentReference;
+import com.genkey.fingerprint.model.CaptureResult;
+import com.genkey.fingerprint.model.FingerprintData;
+import com.genkey.fingerprint.model.MultipleFingerCaptureResult;
+import com.genkey.platform.utils.CollectionUtils;
+
 public class CaptureUtils {
-    
-    /**
-     * Segment a multiple finger capture result into individual finger results
-     * Uses individual finger images from the fingerImages array if available
-     * 
-     * @param multipleResult the multiple finger capture result
-     * @param fingers array of finger positions
-     * @return list of individual capture results
-     */
-    public static List<CaptureResult> segmentCaptureResult(MultipleFingerCaptureResult multipleResult, int[] fingers) {
-        List<CaptureResult> results = new ArrayList<>();
-        
-        if (multipleResult == null || fingers == null) {
-            log.warn("Invalid input for segmentCaptureResult");
-            return results;
-        }
-        
-        byte[][] fingerImages = multipleResult.getFingerImages();
-        
-        // Create individual finger results using finger-specific images if available
-        for (int i = 0; i < fingers.length; i++) {
-            int finger = fingers[i];
-            
-            // Use individual finger image if available, otherwise fall back to the single image
-            byte[] imageData = null;
-            if (fingerImages != null && i < fingerImages.length && fingerImages[i] != null) {
-                imageData = fingerImages[i];
-                log.debug("Using individual image for finger {} (index {})", finger, i);
-            } else {
-                imageData = multipleResult.getImageData();
-                log.debug("Using shared image for finger {} (individual image not available)", finger);
-            }
-            
-            CaptureResult result = CaptureResult.builder()
-                    .success(multipleResult.isSuccess())
-                    .statusCode(multipleResult.getStatusCode())
-                    .statusMessage(multipleResult.getStatusMessage())
-                    .finger(finger)
-                    .imageData(imageData)
-                    .imageFormat(multipleResult.getImageFormat())
-                    .quality(multipleResult.getQuality())
-                    .width(multipleResult.getWidth())
-                    .height(multipleResult.getHeight())
-                    .resolution(multipleResult.getResolution())
-                    .captureTimeMs(multipleResult.getCaptureTimeMs())
-                    .build();
-            
-            results.add(result);
-        }
-        
-        log.info("Segmented multiple capture result into {} individual finger results", results.size());
-        return results;
-    }
+	
+
+	private static final String FORMAT_RAW = "RAW";
+
+	public static ImageData asImageData(CaptureResult captureResult) {
+		String format  = captureResult.getImageFormat();
+		ImageData result;
+		if (format.equalsIgnoreCase(FORMAT_RAW)) {
+			result = new ImageData(captureResult.getWidth(), captureResult.getHeight(), captureResult.getImageData(), captureResult.getResolution());
+		} else {
+			result = new ImageData(captureResult.getImageData(), captureResult.getImageFormat());
+		}
+		return result;
+	}
+	
+	public static List<CaptureResult> segmentCaptureResult(MultipleFingerCaptureResult multiCaptureResult, int [] fingers) {
+		
+		ImageData imageData = asImageData(multiCaptureResult);	
+		Map<Integer,Integer> qualityScores = new HashMap<>();
+		Map<Integer, ImageData> segments = segmentImage(imageData, fingers, qualityScores); 
+		
+		List<CaptureResult> captureSegments = CollectionUtils.newList();
+		for(Map.Entry<Integer, ImageData> entry : segments.entrySet()) {
+			int fingerId = entry.getKey();
+			ImageData segment = entry.getValue();
+			int qualityScore = qualityScores.get(fingerId);
+			CaptureResult result = asCaptureResult(multiCaptureResult, segment, fingerId, qualityScore, "RAW");
+			captureSegments.add(result);
+		}
+		return captureSegments;
+	}
+	
+	public static CaptureResult asCaptureResult(CaptureResult mc, ImageData segment, int fingerId, int qualityScore, String format) {
+		byte [] imageData = segment.getPixelData();
+		return ((CaptureResult) mc).toBuilder().finger(fingerId)
+					.height(segment.getHeight()).width(segment.getWidth())
+					.quality(qualityScore)
+					.imageData(imageData)
+					.imageFormat(format)
+					.build();
+		
+	}
+	
+	/**
+	 * Performs segmentation 
+	 * @param imageData
+	 * @param fingers
+	 * @param qualityScores 
+	 * @return
+	 */
+	public static Map<Integer, ImageData> segmentImage(ImageData imageData, int[] fingers, Map<Integer,Integer> qualityScores) {
+		ImageContext imageContext = new ImageContext(imageData, fingers);
+		if (imageContext.isBlocked()) {
+			return null;
+		}
+		Map<Integer, ImageData> result = new HashMap<>();
+		int fingerIds[] = imageContext.getFingers();
+		for(int ix=0; ix < imageContext.count(); ix++) {
+			int fingerId=fingerIds[ix];
+			ImageData segment = imageContext.extractImageSegment(ix);
+			result.put(fingerId, segment);
+			if (qualityScores != null) {
+				qualityScores.put(fingerId, imageContext.getQualityInfo(ix).getQualityScore());
+			}
+		}
+		return result;
+	}
+	
+	public static FingerEnrollmentReference asFingerEnrollmentReference(CaptureResult captureResult) {
+		return null;
+	}
+
+	public static boolean isNullArray(byte [] array) {
+		return array == null || array.length == 0;
+	}
+	
+	public static boolean isNullString(String encoding) {
+		return encoding == null || encoding.length() == 0;
+	}
+	
+	public static void checkImageData(CaptureResult captureResult) {
+		if (isNullArray(captureResult.getImageData()) && ! isNullString(captureResult.getTemplateBase64())) {
+			captureResult.setImageData(Base64.getDecoder().decode(captureResult.getTemplateBase64()));
+		}
+	}
+	
+	public static FingerprintData asFingerprintData(CaptureResult captureResult) {
+		checkImageData(captureResult);
+		return FingerprintData.builder()
+        .finger(captureResult.getFinger())
+        .imageData(captureResult.getImageData())
+        .imageFormat(captureResult.getImageFormat())
+        .quality(captureResult.getQuality())
+        .width(captureResult.getWidth())
+        .height(captureResult.getHeight())
+        .resolution(captureResult.getResolution())
+        .build();		
+	}
+	
 }

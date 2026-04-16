@@ -185,7 +185,6 @@ public class AbisService {
                 FingerEnrollmentReference fingerRef = new FingerEnrollmentReference(fpData.getFinger(), false);
                 
                 // Convert format string to SDK format code for addImage()
-                String imageFormat = getImageFormatCode(fpData.getImageFormat());
                 int resolution = fpData.getResolution() > 0 ? fpData.getResolution() : 500;
                 
                 log.info("Adding enrollment fingerprint: finger={}, resolution={}, dataSize={}", 
@@ -196,20 +195,15 @@ public class AbisService {
                 try {
                     ImageData imageData;
                     String originalFormat = fpData.getImageFormat();
-                    if ("BMP".equalsIgnoreCase(originalFormat)) {
-                        // Use default constructor for encoded BMP data
-                        imageData = new ImageData(fpData.getImageData(), ImageData.FORMAT_BMP, resolution);
-                        fingerRef.addImageData(imageData, ImageData.FORMAT_WSQ);
-                    } else if ("WSQ".equalsIgnoreCase(originalFormat)) {
-                        // Use default constructor for encoded WSQ data
-                        imageData = new ImageData(fpData.getImageData(), ImageData.FORMAT_WSQ, resolution);
-                        fingerRef.addImageData(imageData, ImageData.FORMAT_WSQ);
+                    if ("RAW".equalsIgnoreCase(originalFormat)) {
+                        // Use raw constructor for (width, height, data, resolution)
+                        imageData = new ImageData(fpData.getWidth(), fpData.getHeight(), fpData.getImageData(), resolution);
                     } else {
                         // Use default constructor for encoded data
-                        imageData = new ImageData(fpData.getImageData(), imageFormat, resolution);
-                        // Use the actual format
-                        fingerRef.addImageData(imageData, imageFormat);
+                        imageData = new ImageData(fpData.getImageData(), originalFormat, resolution);
                     }
+                    // Always use WSQ as the supported storage format constant for addImageData
+                    fingerRef.addImageData(imageData, ImageData.FORMAT_WSQ);
                 } catch (Exception inner) {
                     log.error("Failed to add image for finger {}: {}", fpData.getFinger(), inner.getMessage(), inner);
                     throw new RuntimeException("Enrollment failed for finger " + fpData.getFinger(), inner);
@@ -343,21 +337,17 @@ public class AbisService {
             if (request.getFingerprints() != null) {
                 for (FingerprintData fpData : request.getFingerprints()) {
                     FingerEnrollmentReference fingerRef = new FingerEnrollmentReference(fpData.getFinger(), false);
-                    String imageFormat = getImageFormatCode(fpData.getImageFormat());
+                    String imageFormat = fpData.getImageFormat();
                     int resolution = fpData.getResolution() > 0 ? fpData.getResolution() : 500;
                     
                     try {
                         ImageData imageData;
-                        if ("BMP".equalsIgnoreCase(fpData.getImageFormat())) {
-                            imageData = new ImageData(fpData.getImageData(), ImageData.FORMAT_BMP, resolution);
-                            fingerRef.addImageData(imageData, ImageData.FORMAT_WSQ);
-                        } else if ("WSQ".equalsIgnoreCase(fpData.getImageFormat())) {
-                            imageData = new ImageData(fpData.getImageData(), ImageData.FORMAT_WSQ, resolution);
-                            fingerRef.addImageData(imageData, ImageData.FORMAT_WSQ);
+                        if ("RAW".equalsIgnoreCase(fpData.getImageFormat())) {
+                            imageData = new ImageData(fpData.getWidth(), fpData.getHeight(), fpData.getImageData(), resolution);
                         } else {
                             imageData = new ImageData(fpData.getImageData(), imageFormat, resolution);
-                            fingerRef.addImageData(imageData, imageFormat);
                         }
+                        fingerRef.addImageData(imageData, ImageData.FORMAT_WSQ);
                     } catch (Exception e) {
                         log.error("Failed to add image for verification: {}", e.getMessage());
                         throw new RuntimeException("Verification setup failed", e);
@@ -447,7 +437,7 @@ public class AbisService {
                     FingerEnrollmentReference fingerRef = new FingerEnrollmentReference(fpData.getFinger(), false);
                 
                 // Convert format string to SDK format code
-                String imageFormat = getImageFormatCode(fpData.getImageFormat());
+                String imageFormat = fpData.getImageFormat();
                 int resolution = fpData.getResolution() > 0 ? fpData.getResolution() : 500;
                 
                 log.info("Adding identification fingerprint: finger={}, resolution={}, dataSize={}", 
@@ -543,29 +533,4 @@ public class AbisService {
         }
     }
     
-    /**
-     * Convert format string to ABIS SDK integer format code.
-     * The addImage() method expects integer format constants: ImageData.FORMAT_BMP or ImageData.FORMAT_WSQ
-     * Other formats will default to ImageData.FORMAT_BMP.
-     */
-    private String getImageFormatCode(String format) {
-        if (format == null) {
-            return ImageData.FORMAT_BMP; // Default to BMP format
-        }
-        String upperFormat = format.toUpperCase();
-        if ("RAW".equals(upperFormat)) {
-            return ImageData.FORMAT_BMP; // Map RAW to BMP for conversion
-        }
-        switch (upperFormat) {
-            case "WSQ":
-                return ImageData.FORMAT_WSQ;
-            case "BMP":
-            case "PNG":
-            case "JPEG":
-            case "JPG":
-            default:
-                // SDK constant for BMP
-                return ImageData.FORMAT_BMP;
-        }
-    }
 }
