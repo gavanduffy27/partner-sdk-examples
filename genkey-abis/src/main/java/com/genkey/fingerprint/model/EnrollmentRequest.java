@@ -12,7 +12,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class EnrollmentRequest {
+public class EnrollmentRequest implements BiometricRequest {
     
     @NotBlank(message = "Subject ID is required")
     private String subjectId;

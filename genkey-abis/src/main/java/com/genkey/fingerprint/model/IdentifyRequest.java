@@ -11,7 +11,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class IdentifyRequest {
+public class IdentifyRequest implements BiometricRequest{
     
     private int[] targetFingers;
     private List<FingerprintData> fingerprints;
