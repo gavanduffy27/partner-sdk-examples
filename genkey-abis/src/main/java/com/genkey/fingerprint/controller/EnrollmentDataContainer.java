@@ -14,7 +14,7 @@ import com.genkey.abisclient.service.params.EnquireStatus;
 import com.genkey.abisclient.transport.FingerEnrollmentReference;
 import com.genkey.abisclient.transport.SubjectEnrollmentReference;
 import com.genkey.fingerprint.model.CaptureResult;
-import com.genkey.fingerprint.model.MultipleCaptureResult;
+import com.genkey.fingerprint.model.MultipleFingerCaptureResult;
 import com.genkey.partner.biographic.BiographicProfileRecord;
 import com.genkey.partner.biographic.BiographicService;
 import com.genkey.partner.dgie.DGIEServiceModule;
@@ -55,7 +55,7 @@ public class EnrollmentDataContainer {
 		addImageData(asImageData(result), result.getFinger());
 	}
 	
-	public void addMultipleFingerCapture(MultipleCaptureResult result) {
+	public void addMultipleFingerCapture(MultipleFingerCaptureResult result) {
 		ImageData fullImage = asImageData(result);
 		Map<Integer, ImageData> segmentMap = segmentImage(fullImage, result.getFingers());
 		for(Map.Entry<Integer, ImageData> entry : segmentMap.entrySet()) {

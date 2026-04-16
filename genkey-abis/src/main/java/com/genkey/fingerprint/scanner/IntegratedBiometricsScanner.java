@@ -2,6 +2,7 @@ package com.genkey.fingerprint.scanner;
 
 import com.genkey.fingerprint.config.ScannerConfig;
 import com.genkey.fingerprint.model.CaptureResult;
+import com.genkey.fingerprint.model.MultipleFingerCaptureResult;
 import com.genkey.fingerprint.websocket.PreviewBroadcaster;
 import lombok.extern.slf4j.Slf4j;
 
@@ -43,6 +44,8 @@ public class IntegratedBiometricsScanner implements FingerprintScanner {
     private Object ibScan;
     private Object ibDevice;
     private ClassLoader sdkClassLoader;
+    private Object[] lastSplitImages; // Store split images from last capture
+    private Object[] lastSegmentPositions; // Store segment positions for cropping
     
     public IntegratedBiometricsScanner(ScannerConfig config) {
         this.config = config;
@@ -171,6 +174,10 @@ public class IntegratedBiometricsScanner implements FingerprintScanner {
     
     @Override
     public CaptureResult capture(int finger, int timeout) {
+        return capture(finger, timeout, false);
+    }
+    
+    private CaptureResult capture(int finger, int timeout, boolean isMultipleFingerCapture) {
         if (!initialized || ibDevice == null) {
             return CaptureResult.builder()
                     .success(false)
@@ -205,9 +212,15 @@ public class IntegratedBiometricsScanner implements FingerprintScanner {
         try {
             if (!GraphicsEnvironment.isHeadless()) {
                 previewWindow = new FingerprintPreviewWindow();
-                previewWindow.setInstruction("PLACE " + getFingerName(finger).toUpperCase() + " ON SCANNER");
+                // Check if this is a multiple finger capture by checking the finger value
+                // For multiple capture, finger might be -1 or a special value
+                String instruction = "PLACE " + getFingerName(finger).toUpperCase() + " ON SCANNER";
+                if (finger <= 0) {
+                    instruction = "PLACE MULTIPLE FINGERS ON SCANNER (4-4-2 CONFIGURATION)";
+                }
+                previewWindow.setInstruction(instruction);
                 previewWindow.showWindow();
-                log.info("Preview window opened");
+                log.info("Preview window opened with instruction: {}", instruction);
             } else {
                 log.info("Running in headless mode - preview window disabled");
             }
@@ -248,12 +261,65 @@ public class IntegratedBiometricsScanner implements FingerprintScanner {
                         
                         if (name.equals("deviceImageResultAvailable") || name.equals("deviceImageResultExtendedAvailable")) {
                             log.info("Callback received {}! Args count: {}", name, args != null ? args.length : 0);
+                            // Log all arguments to understand the callback structure
+                            if (args != null) {
+                                for (int i = 0; i < args.length; i++) {
+                                    if (args[i] != null) {
+                                        log.info("  Arg[{}]: {} - {}", i, args[i].getClass().getName(), args[i]);
+                                    } else {
+                                        log.info("  Arg[{}]: null", i);
+                                    }
+                                }
+                            }
                             // For deviceImageResultAvailable: (IBScanDevice device, ImageData image, ImageType imageType, ImageData[] splitImageArray)
-                            // For deviceImageResultExtendedAvailable: similar but with more data
+                            // For deviceImageResultExtendedAvailable: (IBScanDevice device, IBScanException exception, ImageData image, ImageType imageType, int fingerCount, ImageData[] splitImageArray, SegmentPosition[] positions)
                             if (args != null && args.length > 1) {
-                                Object imageArg = args[1];
-                                // Verify the image is not null before proceeding
-                                if (imageArg != null) {
+                                Object imageArg = null;
+                                // For multiple finger capture, try to use split image array which contains individual finger images
+                                Object[] splitImages = null;
+                                int splitImageIndex = 3; // Default for regular callback
+                                
+                                if (name.equals("deviceImageResultExtendedAvailable") && args.length > 5) {
+                                    splitImages = (Object[]) args[5]; // ImageData[] is at index 5 for extended callback
+                                    imageArg = args[2]; // ImageData is at index 2 for extended callback
+                                    // Store segment positions for cropping
+                                    if (args.length > 6) {
+                                        lastSegmentPositions = (Object[]) args[6]; // SegmentPosition[] is at index 6
+                                        log.info("Stored {} segment positions for cropping", lastSegmentPositions != null ? lastSegmentPositions.length : 0);
+                                    }
+                                } else if (args.length > 3) {
+                                    splitImages = (Object[]) args[3]; // ImageData[] is at index 3 for regular callback
+                                    imageArg = args[1]; // ImageData is at index 1 for regular callback
+                                } else {
+                                    imageArg = args[1]; // Fallback to full image
+                                }
+                                
+                                // If split images are available and this is a multiple finger capture, use the first split image
+                                if (splitImages != null && splitImages.length > 0 && isMultipleFingerCapture) {
+                                    log.info("Using split image array for multiple finger capture ({} images available)", splitImages.length);
+                                    lastSplitImages = splitImages; // Store all split images for later use
+                                    
+                                    // Save the full unsegmented image (the main image before segmentation)
+                                    try {
+                                        Object fullImage = (name.equals("deviceImageResultExtendedAvailable") && args.length > 2) 
+                                                ? args[2] 
+                                                : (args.length > 1 ? args[1] : null);
+                                        
+                                        if (fullImage != null && fullImage.getClass().getName().contains("ImageData")) {
+                                            byte[] bmpData = extractBmpImageData(fullImage);
+                                            saveImageToFile(bmpData, "full_capture", splitImages.length);
+                                        }
+                                    } catch (Exception e) {
+                                        log.error("Failed to save full unsegmented image: {}", e.getMessage());
+                                    }
+                                    
+                                    imageArg = splitImages[0]; // Use first split image for now
+                                } else {
+                                    lastSplitImages = null; // Clear split images if not available
+                                }
+                                
+                                // Verify the image is not null and is an ImageData object
+                                if (imageArg != null && imageArg.getClass().getName().contains("ImageData")) {
                                     // IMMEDIATELY set the result and notify - this is critical for race condition
                                     synchronized (lock) {
                                         if (resultHolder[0] == null) { // Only set if not already set
@@ -273,9 +339,27 @@ public class IntegratedBiometricsScanner implements FingerprintScanner {
                                     
                                     // Broadcast capture success to WebSocket clients
                                     try {
-                                        byte[] capturedBuffer = (byte[]) imageArg.getClass().getField("buffer").get(imageArg);
-                                        int capturedWidth = imageArg.getClass().getField("width").getInt(imageArg);
-                                        int capturedHeight = imageArg.getClass().getField("height").getInt(imageArg);
+                                        byte[] capturedBuffer = null;
+                                        int capturedWidth = 0;
+                                        int capturedHeight = 0;
+                                        
+                                        try {
+                                            java.lang.reflect.Method toImageMethod = imageArg.getClass().getMethod("toImage");
+                                            java.awt.image.BufferedImage bufferedImage = (java.awt.image.BufferedImage) toImageMethod.invoke(imageArg);
+                                            
+                                            if (bufferedImage != null) {
+                                                capturedWidth = bufferedImage.getWidth();
+                                                capturedHeight = bufferedImage.getHeight();
+                                                
+                                                // Convert BufferedImage to BMP for browser display
+                                                java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+                                                javax.imageio.ImageIO.write(bufferedImage, "bmp", baos);
+                                                capturedBuffer = baos.toByteArray();
+                                            }
+                                        } catch (Exception e) {
+                                            log.warn("Preview broadcast: Failed to convert ImageData: {}", e.getMessage());
+                                        }
+                                        
                                         if (capturedBuffer != null && capturedBuffer.length > 0) {
                                             PreviewBroadcaster.broadcastCaptureSuccess(finger, getFingerName(finger), capturedBuffer, capturedWidth, capturedHeight);
                                         }
@@ -301,9 +385,38 @@ public class IntegratedBiometricsScanner implements FingerprintScanner {
                                      Object previewImageData = args[1]; // ImageData object
                                       if (previewImageData != null) {
                                          log.debug("Preview ImageData class: {}", previewImageData.getClass().getName());
-                                         byte[] buffer = (byte[]) previewImageData.getClass().getField("buffer").get(previewImageData);
-                                         int width = previewImageData.getClass().getField("width").getInt(previewImageData);
-                                          int height = previewImageData.getClass().getField("height").getInt(previewImageData);
+                                         
+                                         // Try to get raw buffer from SDK (original format that browser expects)
+                                         byte[] buffer = null;
+                                         int width = 0;
+                                         int height = 0;
+                                         
+                                         try {
+                                             // Try direct field access first (original approach)
+                                             buffer = (byte[]) previewImageData.getClass().getField("buffer").get(previewImageData);
+                                             width = previewImageData.getClass().getField("width").getInt(previewImageData);
+                                             height = previewImageData.getClass().getField("height").getInt(previewImageData);
+                                         } catch (NoSuchFieldException e) {
+                                             // Fallback: use toImage() and extract raw data
+                                             java.lang.reflect.Method toImageMethod = previewImageData.getClass().getMethod("toImage");
+                                             java.awt.image.BufferedImage bufferedImage = (java.awt.image.BufferedImage) toImageMethod.invoke(previewImageData);
+                                             
+                                             if (bufferedImage != null) {
+                                                 width = bufferedImage.getWidth();
+                                                 height = bufferedImage.getHeight();
+                                                 
+                                                 // Extract raw pixel data in original format
+                                                 int[] pixels = bufferedImage.getRGB(0, 0, width, height, null, 0, width);
+                                                 buffer = new byte[pixels.length * 3]; // RGB only (no alpha)
+                                                 int index = 0;
+                                                 for (int pixel : pixels) {
+                                                     buffer[index++] = (byte) (pixel & 0xFF);         // B
+                                                     buffer[index++] = (byte) ((pixel >> 8) & 0xFF);  // G
+                                                     buffer[index++] = (byte) ((pixel >> 16) & 0xFF); // R
+                                                 }
+                                             }
+                                         }
+                                         
                                          log.debug("Preview frame: {}x{}, buffer size: {}", width, height, buffer != null ? buffer.length : 0);
                                          
                                          // Update local preview window
@@ -312,9 +425,9 @@ public class IntegratedBiometricsScanner implements FingerprintScanner {
                                              finalPreviewWindow.setStatus("Scanning... Keep finger steady");
                                          }
                                          
-                                          // Broadcast to WebSocket clients for web UI
-                                          if (buffer != null && buffer.length > 0) {
-                                              log.debug("Broadcasting preview frame to WebSocket clients");
+                                         // Broadcast to WebSocket clients for web UI
+                                         if (buffer != null && buffer.length > 0) {
+                                             log.debug("Broadcasting preview frame to WebSocket clients");
                                              PreviewBroadcaster.broadcastPreview(buffer, width, height);
                                          }
                                      } else {
@@ -532,13 +645,39 @@ public class IntegratedBiometricsScanner implements FingerprintScanner {
             */
             // Since it's a public field in the SDK usually, but via reflection we access fields.
             
-            byte[] imageBuffer = (byte[]) capturedImage.getClass().getField("buffer").get(capturedImage);
-            int width = capturedImage.getClass().getField("width").getInt(capturedImage);
-            int height = capturedImage.getClass().getField("height").getInt(capturedImage);
+            byte[] imageBuffer = null;
+            int width = 0;
+            int height = 0;
+            
+            log.info("Captured image class: {}", capturedImage.getClass().getName());
+            log.info("Available methods: {}", 
+                java.util.Arrays.toString(capturedImage.getClass().getDeclaredMethods()));
+            
+            // Try to get raw buffer data using various method names
+            try {
+                // Try toImage() method first
+                java.lang.reflect.Method toImageMethod = capturedImage.getClass().getMethod("toImage");
+                java.awt.image.BufferedImage bufferedImage = (java.awt.image.BufferedImage) toImageMethod.invoke(capturedImage);
+                
+                if (bufferedImage != null) {
+                    width = bufferedImage.getWidth();
+                    height = bufferedImage.getHeight();
+                    
+                    // Extract BMP data for ABIS to convert to WSQ
+                    java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+                    javax.imageio.ImageIO.write(bufferedImage, "bmp", baos);
+                    imageBuffer = baos.toByteArray();
+                    
+                    log.info("Successfully extracted BMP data: {}x{}, size={} bytes", width, height, imageBuffer.length);
+                }
+            } catch (Exception e) {
+                log.error("Failed to extract BMP data: {}", e.getMessage());
+                throw e;
+            }
             
             log.info("Image Dimensions: {}x{}", width, height);
             
-            // Return RAW data instead of BMP to avoid native crashes in ABIS
+            // Return BMP data for ABIS to convert to WSQ
             long captureTime = System.currentTimeMillis() - startTime;
             
             return CaptureResult.builder()
@@ -547,7 +686,7 @@ public class IntegratedBiometricsScanner implements FingerprintScanner {
                     .statusMessage("Capture successful")
                     .finger(finger)
                     .imageData(imageBuffer)
-                    .imageFormat("RAW")
+                    .imageFormat("BMP")
                     .quality(80) // Mock quality
                     .width(width)
                     .height(height)
@@ -601,6 +740,305 @@ public class IntegratedBiometricsScanner implements FingerprintScanner {
                  }).start();
              }
         }
+    }
+    
+    @Override
+    public MultipleFingerCaptureResult captureMultiple(int[] fingers, int timeout) {
+        if (!initialized || ibDevice == null) {
+            return MultipleFingerCaptureResult.multiBuilder()
+                    .success(false)
+                    .statusCode(-1)
+                    .statusMessage("Scanner not initialized or device not opened")
+                    .fingers(fingers)
+                    .build();
+        }
+        
+        long startTime = System.currentTimeMillis();
+        
+        try {
+            // Use the first finger for the capture (simplified approach)
+            int primaryFinger = fingers.length > 0 ? fingers[0] : 1;
+            
+            // Capture using the existing single finger method with multiple finger flag
+            CaptureResult singleResult = capture(primaryFinger, timeout, true);
+            
+            // Convert all split images to BMP format for ABIS WSQ conversion
+            byte[][] fingerImages = null;
+            if (lastSplitImages != null && lastSplitImages.length > 0) {
+                fingerImages = new byte[lastSplitImages.length][];
+                for (int i = 0; i < lastSplitImages.length && i < fingers.length; i++) {
+                    try {
+                        Object imageData = lastSplitImages[i];
+                        if (imageData != null && imageData.getClass().getName().contains("ImageData")) {
+                            // Get segment position for this finger if available
+                            Object segmentPosition = null;
+                            if (lastSegmentPositions != null && i < lastSegmentPositions.length) {
+                                segmentPosition = lastSegmentPositions[i];
+                            }
+                            
+                            // Log dimensions of each split image to verify they are different
+                            try {
+                                java.lang.reflect.Method toImageMethod = imageData.getClass().getMethod("toImage");
+                                java.awt.image.BufferedImage bufferedImage = (java.awt.image.BufferedImage) toImageMethod.invoke(imageData);
+                                if (bufferedImage != null) {
+                                    log.info("Split image {} dimensions: {}x{}", i, bufferedImage.getWidth(), bufferedImage.getHeight());
+                                }
+                            } catch (Exception e) {
+                                log.error("Failed to get dimensions for split image {}: {}", i, e.getMessage());
+                            }
+                            
+                            // Extract BMP image data for ABIS to convert to WSQ, with cropping if segment position available
+                            byte[] bmpData = extractBmpImageData(imageData, segmentPosition);
+                            fingerImages[i] = bmpData;
+                            log.info("Converted split image {} to BMP format, size={} bytes", i, bmpData != null ? bmpData.length : 0);
+                        }
+                    } catch (Exception e) {
+                        log.error("Error converting split image {}: {}", i, e.getMessage());
+                        fingerImages[i] = null;
+                    }
+                }
+            }
+            
+            // Convert to MultipleFingerCaptureResult
+            // Use the first split image's BMP data as the main imageData to ensure format consistency
+            byte[] mainImageData = (fingerImages != null && fingerImages.length > 0 && fingerImages[0] != null) 
+                    ? fingerImages[0] 
+                    : singleResult.getImageData();
+            
+            MultipleFingerCaptureResult result = MultipleFingerCaptureResult.multiBuilder()
+                    .success(singleResult.isSuccess())
+                    .statusCode(singleResult.getStatusCode())
+                    .statusMessage(singleResult.getStatusMessage())
+                    .fingers(fingers)
+                    .imageData(mainImageData)
+                    .imageFormat("BMP") // Use BMP format for ABIS to convert to WSQ
+                    .quality(singleResult.getQuality())
+                    .width(singleResult.getWidth())
+                    .height(singleResult.getHeight())
+                    .resolution(singleResult.getResolution())
+                    .captureTimeMs(System.currentTimeMillis() - startTime)
+                    .fingerImages(fingerImages)
+                    .build();
+            
+            // Broadcast capture success for each finger in multiple finger capture
+            if (singleResult.isSuccess()) {
+                for (int i = 0; i < fingers.length; i++) {
+                    int finger = fingers[i];
+                    byte[] bmpData = null;
+                    int width = singleResult.getWidth();
+                    int height = singleResult.getHeight();
+                    
+                    if (lastSplitImages != null && i < lastSplitImages.length && lastSplitImages[i] != null) {
+                        // Extract BMP data directly from split image for preview, with cropping if segment position available
+                        try {
+                            Object segmentPosition = null;
+                            if (lastSegmentPositions != null && i < lastSegmentPositions.length) {
+                                segmentPosition = lastSegmentPositions[i];
+                            }
+                            bmpData = extractBmpImageData(lastSplitImages[i], segmentPosition);
+                            
+                            // Get dimensions from the split image (after cropping)
+                            java.lang.reflect.Method toImageMethod = lastSplitImages[i].getClass().getMethod("toImage");
+                            java.awt.image.BufferedImage bufferedImage = (java.awt.image.BufferedImage) toImageMethod.invoke(lastSplitImages[i]);
+                            if (bufferedImage != null) {
+                                width = bufferedImage.getWidth();
+                                height = bufferedImage.getHeight();
+                            }
+                        } catch (Exception e) {
+                            log.error("Error extracting BMP data for split image {}: {}", i, e.getMessage());
+                            bmpData = singleResult.getImageData();
+                        }
+                    } else {
+                        // Use single result image
+                        bmpData = singleResult.getImageData();
+                    }
+                    
+                    log.info("Broadcasting capture success for finger {} (index {} of {})", finger, i+1, fingers.length);
+                    PreviewBroadcaster.broadcastCaptureSuccess(finger, getFingerName(finger), 
+                            bmpData, width, height);
+                    
+                    // Add a small delay between broadcasts to avoid WebSocket state issues
+                    try {
+                        Thread.sleep(200);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
+            }
+            
+            return result;
+        } catch (Exception e) {
+            log.error("Error in captureMultiple: {}", e.getMessage(), e);
+            return MultipleFingerCaptureResult.multiBuilder()
+                    .success(false)
+                    .statusCode(-1)
+                    .statusMessage("Capture failed: " + e.getMessage())
+                    .fingers(fingers)
+                    .build();
+        }
+    }
+    
+    /**
+     * Extract image data from ImageData object using reflection
+     * Extracts BMP data for ABIS to convert to WSQ
+     */
+    private byte[] extractImageData(Object imageData) throws Exception {
+        try {
+            // Try to convert to BufferedImage first
+            java.lang.reflect.Method toImageMethod = imageData.getClass().getMethod("toImage");
+            java.awt.image.BufferedImage bufferedImage = (java.awt.image.BufferedImage) toImageMethod.invoke(imageData);
+            
+            if (bufferedImage != null) {
+                int width = bufferedImage.getWidth();
+                int height = bufferedImage.getHeight();
+                
+                // Extract BMP data for ABIS to convert to WSQ
+                java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+                javax.imageio.ImageIO.write(bufferedImage, "bmp", baos);
+                byte[] bmpData = baos.toByteArray();
+                
+                log.debug("Extracted BMP data: {}x{}, size={} bytes", width, height, bmpData.length);
+                return bmpData;
+            }
+        } catch (Exception e) {
+            log.error("Failed to extract image data: {}", e.getMessage());
+            throw e;
+        }
+        return null;
+    }
+    
+    /**
+     * Extract BMP image data from ImageData object for preview broadcast
+     * Returns BMP data directly to avoid dimension mismatch issues
+     */
+    private byte[] extractBmpImageData(Object imageData) throws Exception {
+        return extractBmpImageData(imageData, null);
+    }
+    
+    /**
+     * Extract BMP image data from ImageData object with optional cropping using segment position
+     */
+    private byte[] extractBmpImageData(Object imageData, Object segmentPosition) throws Exception {
+        try {
+            java.lang.reflect.Method toImageMethod = imageData.getClass().getMethod("toImage");
+            java.awt.image.BufferedImage bufferedImage = (java.awt.image.BufferedImage) toImageMethod.invoke(imageData);
+            
+            if (bufferedImage != null) {
+                int width = bufferedImage.getWidth();
+                int height = bufferedImage.getHeight();
+                
+                // If segment position is provided, crop the image to the finger region
+                if (segmentPosition != null) {
+                    try {
+                        // Log all available fields in SegmentPosition to understand its structure
+                        java.lang.reflect.Field[] fields = segmentPosition.getClass().getDeclaredFields();
+                        log.info("SegmentPosition fields: {}", java.util.Arrays.toString(fields));
+                        
+                        for (java.lang.reflect.Field field : fields) {
+                            field.setAccessible(true);
+                            try {
+                                Object value = field.get(segmentPosition);
+                                log.info("  Field: {} = {} (type: {})", field.getName(), value, field.getType().getSimpleName());
+                            } catch (Exception e) {
+                                log.error("  Failed to read field {}: {}", field.getName(), e.getMessage());
+                            }
+                        }
+                        
+                        // Try common field names for segment position
+                        int x = 0, y = 0, segWidth = width, segHeight = height;
+                        boolean foundFields = false;
+                        
+                        // Try various possible field names
+                        String[] xFieldNames = {"x", "X", "left", "Left", "offsetX", "OffsetX"};
+                        String[] yFieldNames = {"y", "Y", "top", "Top", "offsetY", "OffsetY"};
+                        String[] widthFieldNames = {"width", "Width", "w", "W"};
+                        String[] heightFieldNames = {"height", "Height", "h", "H"};
+                        
+                        for (String fieldName : xFieldNames) {
+                            try {
+                                java.lang.reflect.Field field = segmentPosition.getClass().getField(fieldName);
+                                x = field.getInt(segmentPosition);
+                                log.info("Found x field: {} = {}", fieldName, x);
+                                foundFields = true;
+                                break;
+                            } catch (NoSuchFieldException e) {
+                                // Continue to next field name
+                            }
+                        }
+                        
+                        for (String fieldName : yFieldNames) {
+                            try {
+                                java.lang.reflect.Field field = segmentPosition.getClass().getField(fieldName);
+                                y = field.getInt(segmentPosition);
+                                log.info("Found y field: {} = {}", fieldName, y);
+                                foundFields = true;
+                                break;
+                            } catch (NoSuchFieldException e) {
+                                // Continue to next field name
+                            }
+                        }
+                        
+                        for (String fieldName : widthFieldNames) {
+                            try {
+                                java.lang.reflect.Field field = segmentPosition.getClass().getField(fieldName);
+                                segWidth = field.getInt(segmentPosition);
+                                log.info("Found width field: {} = {}", fieldName, segWidth);
+                                foundFields = true;
+                                break;
+                            } catch (NoSuchFieldException e) {
+                                // Continue to next field name
+                            }
+                        }
+                        
+                        for (String fieldName : heightFieldNames) {
+                            try {
+                                java.lang.reflect.Field field = segmentPosition.getClass().getField(fieldName);
+                                segHeight = field.getInt(segmentPosition);
+                                log.info("Found height field: {} = {}", fieldName, segHeight);
+                                foundFields = true;
+                                break;
+                            } catch (NoSuchFieldException e) {
+                                // Continue to next field name
+                            }
+                        }
+                        
+                        if (foundFields) {
+                            log.info("Cropping image using segment position: x={}, y={}, width={}, height={}, original={}x{}", 
+                                    x, y, segWidth, segHeight, width, height);
+                            
+                            // Validate crop coordinates
+                            if (x >= 0 && y >= 0 && segWidth > 0 && segHeight > 0 && 
+                                x + segWidth <= width && y + segHeight <= height) {
+                                bufferedImage = bufferedImage.getSubimage(x, y, segWidth, segHeight);
+                                width = segWidth;
+                                height = segHeight;
+                                log.info("Successfully cropped image to {}x{}", width, height);
+                            } else {
+                                log.warn("Invalid crop coordinates, using original image: x={}, y={}, width={}, height={}, original={}x{}", 
+                                        x, y, segWidth, segHeight, width, height);
+                            }
+                        } else {
+                            log.warn("Could not find segment position fields, using original image");
+                        }
+                    } catch (Exception e) {
+                        log.error("Failed to apply segment position for cropping: {}", e.getMessage(), e);
+                        // Continue with original image
+                    }
+                }
+                
+                // Convert to BMP format
+                java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+                javax.imageio.ImageIO.write(bufferedImage, "bmp", baos);
+                byte[] bmpData = baos.toByteArray();
+                
+                log.debug("Extracted BMP data: {}x{}, size={} bytes", width, height, bmpData.length);
+                return bmpData;
+            }
+        } catch (Exception e) {
+            log.error("Failed to extract BMP image data: {}", e.getMessage());
+            throw e;
+        }
+        return null;
     }
     
     /**
@@ -678,6 +1116,32 @@ public class IntegratedBiometricsScanner implements FingerprintScanner {
     private void writeShort(byte[] buffer, int offset, int value) {
         buffer[offset] = (byte) (value & 0xFF);
         buffer[offset + 1] = (byte) ((value >> 8) & 0xFF);
+    }
+    
+    /**
+     * Save image data to a file on the local machine
+     */
+    private void saveImageToFile(byte[] imageData, String prefix, int fingerCount) {
+        try {
+            // Create captures directory if it doesn't exist
+            java.io.File capturesDir = new java.io.File("C:\\Users\\Rodb\\Desktop\\captures");
+            if (!capturesDir.exists()) {
+                capturesDir.mkdirs();
+            }
+            
+            // Generate timestamped filename
+            java.time.LocalDateTime now = java.time.LocalDateTime.now();
+            java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
+            String timestamp = now.format(formatter);
+            String filename = String.format("%s_%d_fingers_%s.bmp", prefix, fingerCount, timestamp);
+            
+            java.io.File outputFile = new java.io.File(capturesDir, filename);
+            java.nio.file.Files.write(outputFile.toPath(), imageData);
+            
+            log.info("Saved capture image to: {}", outputFile.getAbsolutePath());
+        } catch (Exception e) {
+            log.error("Failed to save image to file: {}", e.getMessage());
+        }
     }
     
     private int estimateQuality(byte[] imageData, int width, int height) {

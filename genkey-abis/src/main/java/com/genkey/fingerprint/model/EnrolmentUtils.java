@@ -8,6 +8,7 @@ import com.genkey.abisclient.ImageContext;
 import com.genkey.abisclient.ImageData;
 import com.genkey.abisclient.transport.FingerEnrollmentReference;
 import com.genkey.abisclient.transport.SubjectEnrollmentReference;
+import com.genkey.fingerprint.util.CaptureUtils;
 
 /**
  * Utilities for consuming application CaptureResult or FingerPrintData directly into a SubjectEnrolmentReference
@@ -51,7 +52,7 @@ public class EnrolmentUtils {
 	 * @param result
 	 * @param autoExtract
 	 */
-	public static void addCaptureData(SubjectEnrollmentReference enrolmentRef, MultipleCaptureResult result, boolean autoExtract) {
+	public static void addCaptureData(SubjectEnrollmentReference enrolmentRef, MultipleFingerCaptureResult result, boolean autoExtract) {
 		ImageData imageData = CaptureUtils.asImageData(result);
 		Map<Integer, ImageData> imageMap = segmentImage(imageData, result.getFingers());
 		for(Map.Entry<Integer, ImageData> entry : imageMap.entrySet()) {

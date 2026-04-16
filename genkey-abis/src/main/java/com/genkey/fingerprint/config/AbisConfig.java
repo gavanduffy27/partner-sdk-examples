@@ -17,7 +17,7 @@ public class AbisConfig {
     public static class Server {
         private String host = "10.22.74.51";
         private int port = 8091;
-        private String domain = "EnrollmentSDK";
+        private String domain = "workshop";
         private String legacyHost = "10.22.74.51";
         private String drHost = "10.22.74.51";
     }

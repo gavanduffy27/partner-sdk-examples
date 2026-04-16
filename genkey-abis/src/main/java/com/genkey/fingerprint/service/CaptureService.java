@@ -3,12 +3,17 @@ package com.genkey.fingerprint.service;
 import com.genkey.fingerprint.config.AbisConfig;
 import com.genkey.fingerprint.model.*;
 import com.genkey.fingerprint.scanner.FingerprintScanner;
+import com.genkey.fingerprint.util.CaptureUtils;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Service for capturing fingerprints from scanner hardware
@@ -21,6 +26,9 @@ public class CaptureService {
     private final FingerprintScanner scanner;
     private final AbisService abisService;
     private final AbisConfig config;
+    
+    // Temporary storage for captured fingerprints before enrollment
+    private final Map<String, List<FingerprintData>> pendingEnrollments = new ConcurrentHashMap<>();
     
     public CaptureService(FingerprintScanner scanner, AbisService abisService, AbisConfig config) {
         this.scanner = scanner;
@@ -91,14 +99,13 @@ public class CaptureService {
         // Return BEST not last result even if quality is low
         if (bestResult != null && bestResult.isSuccess()) {
             log.warn("Returning capture with quality {} (below threshold {})", 
-            		bestResult.getQuality(), qualityThreshold);
+            bestResult.getQuality(), qualityThreshold);
         }
         
         return bestResult;
     }
-    
-    
-    public MultipleCaptureResult captureMultipleFingerImage(int [] fingers) {
+
+	public MultipleFingerCaptureResult captureMultipleFingerImage(int [] fingers) {
     	
     	return scanner.captureMultiple(fingers, config.getCapture().getTimeout());
     }
@@ -110,17 +117,16 @@ public class CaptureService {
      * @param fingers
      * @return
      */
-    public List<CaptureResult> captureMultipleFingers(int[] fingers) {
-    	MultipleCaptureResult captureResult = captureMultipleFingerImage(fingers);
+    public List<CaptureResult> captureMultipleFingersSlap(int[] fingers) {
+    	MultipleFingerCaptureResult captureResult = captureMultipleFingerImage(fingers);
     	List<CaptureResult> result = CaptureUtils.segmentCaptureResult(captureResult, captureResult.getFingers());
     	return result;
-    }
-    
+    }    
     
     /**
      * Capture multiple fingerprints
      */
-    public List<CaptureResult> captureMultipleFingersOld(int[] fingers) {
+    public List<CaptureResult> captureMultipleFingersOneByOne(int[] fingers) {
         List<CaptureResult> results = new ArrayList<>();
         
         for (int finger : fingers) {
@@ -132,7 +138,142 @@ public class CaptureService {
     }
     
     /**
-     * Capture and enroll a subject
+     * Capture fingerprints without enrolling (for two-step enrollment)
+     */
+    public List<CaptureResult> captureForEnrollment(String subjectId, int[] fingers) {
+        log.info("Starting capture for enrollment (without enrolling) for subject: {}", subjectId);
+        
+        // Get existing fingerprints for this subject to accumulate
+        List<FingerprintData> existingFingerprints = pendingEnrollments.get(subjectId);
+        List<FingerprintData> fingerprints = existingFingerprints != null ? new ArrayList<>(existingFingerprints) : new ArrayList<>();
+        
+        log.info("------------------------------------------------------------");
+        log.info("STARTING MULTIPLE FINGER CAPTURE FOR FINGERS: {}", Arrays.toString(fingers));
+        log.info("Please place fingers on the scanner...");
+        log.info("Current pending fingerprints count: {}", fingerprints.size());
+        
+        // Use scanner's captureMultiple for segmentation feature
+        int timeout = config.getCapture().getTimeout();
+        MultipleFingerCaptureResult multipleResult = scanner.captureMultiple(fingers, timeout);
+        
+        // Segment the multiple finger capture result into individual results
+        List<CaptureResult> captureResults = com.genkey.fingerprint.util.CaptureUtils.segmentCaptureResult(multipleResult, fingers);
+        
+        for (CaptureResult captureResult : captureResults) {
+            if (!captureResult.isSuccess()) {
+                log.error("Failed to capture finger {}: {}", captureResult.getFinger(), captureResult.getStatusMessage());
+                continue;
+            }
+            
+            // Check if this finger is already in the list and replace it
+            boolean fingerExists = false;
+            for (int i = 0; i < fingerprints.size(); i++) {
+                if (fingerprints.get(i).getFinger() == captureResult.getFinger()) {
+                    fingerprints.set(i, FingerprintData.builder()
+                            .finger(captureResult.getFinger())
+                            .imageData(captureResult.getImageData())
+                            .imageFormat(captureResult.getImageFormat())
+                            .quality(captureResult.getQuality())
+                            .width(captureResult.getWidth())
+                            .height(captureResult.getHeight())
+                            .resolution(captureResult.getResolution())
+                            .build());
+                    fingerExists = true;
+                    log.info("Updated existing fingerprint for finger {}", captureResult.getFinger());
+                    break;
+                }
+            }
+            
+            if (!fingerExists) {
+                fingerprints.add(FingerprintData.builder()
+                        .finger(captureResult.getFinger())
+                        .imageData(captureResult.getImageData())
+                        .imageFormat(captureResult.getImageFormat())
+                        .quality(captureResult.getQuality())
+                        .width(captureResult.getWidth())
+                        .height(captureResult.getHeight())
+                        .resolution(captureResult.getResolution())
+                        .build());
+                log.info("Added new fingerprint for finger {}", captureResult.getFinger());
+            }
+        }
+        
+        // Store fingerprints for later enrollment
+        if (!fingerprints.isEmpty()) {
+            pendingEnrollments.put(subjectId, fingerprints);
+            log.info("Stored {} total fingerprints for pending enrollment of subject {}", fingerprints.size(), subjectId);
+        }
+        
+        return captureResults;
+    }
+    
+    /**
+     * Enroll previously captured fingerprints
+     */
+    public EnrollmentResponse enrollCapturedFingers(String subjectId, String firstName, String lastName) {
+        log.info("Starting enrollment for previously captured subject: {}", subjectId);
+        
+        // Check if subject already exists
+        if (abisService.subjectExists(subjectId)) {
+            return EnrollmentResponse.builder()
+                    .success(false)
+                    .subjectId(subjectId)
+                    .statusCode(409)
+                    .statusMessage("Subject already exists")
+                    .build();
+        }
+        
+        // Get pending fingerprints
+        List<FingerprintData> fingerprints = pendingEnrollments.get(subjectId);
+        
+        if (fingerprints == null || fingerprints.isEmpty()) {
+            return EnrollmentResponse.builder()
+                    .success(false)
+                    .subjectId(subjectId)
+                    .statusCode(-4)
+                    .statusMessage("No pending fingerprints found for subject. Please capture fingerprints first.")
+                    .build();
+        }
+        
+        // Create enrollment request
+        int[] fingers = fingerprints.stream().mapToInt(FingerprintData::getFinger).toArray();
+        EnrollmentRequest request = EnrollmentRequest.builder()
+                .subjectId(subjectId)
+                .firstName(firstName)
+                .lastName(lastName)
+                .targetFingers(fingers)
+                .fingerprints(fingerprints)
+                .build();
+        
+        // Perform enrollment
+        EnrollmentResponse response = abisService.enrollSubject(request);
+        
+        // Clear pending enrollment after successful enrollment
+        if (response.isSuccess()) {
+            pendingEnrollments.remove(subjectId);
+            log.info("Cleared pending enrollment for subject {}", subjectId);
+        }
+        
+        return response;
+    }
+    
+    /**
+     * Get pending fingerprints for a subject
+     */
+    public List<FingerprintData> getPendingFingerprints(String subjectId) {
+        return pendingEnrollments.get(subjectId);
+    }
+    
+    /**
+     * Clear pending fingerprints for a subject
+     */
+    public void clearPendingFingerprints(String subjectId) {
+        pendingEnrollments.remove(subjectId);
+        log.info("Cleared pending enrollment for subject {}", subjectId);
+    }
+    
+    /**
+     * Capture and enroll a subject (legacy method for backward compatibility)
      */
     public EnrollmentResponse captureAndEnroll(String subjectId, String firstName, 
             String lastName, int[] fingers) {
@@ -152,20 +293,20 @@ public class CaptureService {
         // Capture fingerprints
         List<FingerprintData> fingerprints = new ArrayList<>();
         
-        for (int finger : fingers) {
-            log.info("------------------------------------------------------------");
-            log.info("STARTING CYCLE FOR FINGER: {} ({})", finger, getFingerName(finger));
-            log.info("Please place finger {} on the scanner...", getFingerName(finger));
-            
-            CaptureResult captureResult = captureSingleFinger(finger);
-            
+        log.info("------------------------------------------------------------");
+        log.info("STARTING MULTIPLE FINGER CAPTURE FOR FINGERS: {}", Arrays.toString(fingers));
+        log.info("Please place fingers on the scanner...");
+        
+        List<CaptureResult> captureResults = captureMultipleFingersOneByOne(fingers);
+        
+        for (CaptureResult captureResult : captureResults) {
             if (!captureResult.isSuccess()) {
-                log.error("Failed to capture finger {}: {}", finger, captureResult.getStatusMessage());
+                log.error("Failed to capture finger {}: {}", captureResult.getFinger(), captureResult.getStatusMessage());
                 continue;
             }
             
             fingerprints.add(FingerprintData.builder()
-                    .finger(finger)
+                    .finger(captureResult.getFinger())
                     .imageData(captureResult.getImageData())
                     .imageFormat(captureResult.getImageFormat())
                     .quality(captureResult.getQuality())
@@ -203,21 +344,27 @@ public class CaptureService {
     public VerifyResponse captureAndVerify(String subjectId, int[] fingers) {
         log.info("Starting capture and verify for subject: {}", subjectId);
         
-        // Capture fingerprints
+        // Capture fingerprints using scanner's captureMultiple for segmentation
         List<FingerprintData> fingerprints = new ArrayList<>();
         
-        for (int finger : fingers) {
-            log.info("Please place finger {} on the scanner...", getFingerName(finger));
-            
-            CaptureResult captureResult = captureSingleFinger(finger);
-            
+        log.info("------------------------------------------------------------");
+        log.info("STARTING MULTIPLE FINGER CAPTURE FOR FINGERS: {}", Arrays.toString(fingers));
+        log.info("Please place fingers on the scanner...");
+        
+        int timeout = config.getCapture().getTimeout();
+        MultipleFingerCaptureResult multipleResult = scanner.captureMultiple(fingers, timeout);
+        
+        // Segment the multiple finger capture result into individual results
+        List<CaptureResult> captureResults = com.genkey.fingerprint.util.CaptureUtils.segmentCaptureResult(multipleResult, fingers);
+        
+        for (CaptureResult captureResult : captureResults) {
             if (!captureResult.isSuccess()) {
-                log.error("Failed to capture finger {}", finger);
+                log.error("Failed to capture finger {}: {}", captureResult.getFinger(), captureResult.getStatusMessage());
                 continue;
             }
             
             fingerprints.add(FingerprintData.builder()
-                    .finger(finger)
+                    .finger(captureResult.getFinger())
                     .imageData(captureResult.getImageData())
                     .imageFormat(captureResult.getImageFormat())
                     .quality(captureResult.getQuality())
@@ -252,21 +399,27 @@ public class CaptureService {
     public IdentifyResponse captureAndIdentify(int[] fingers, int maxCandidates) {
         log.info("Starting capture and identify...");
         
-        // Capture fingerprints
+        // Capture fingerprints using scanner's captureMultiple for segmentation
         List<FingerprintData> fingerprints = new ArrayList<>();
         
-        for (int finger : fingers) {
-            log.info("Please place finger {} on the scanner...", getFingerName(finger));
-            
-            CaptureResult captureResult = captureSingleFinger(finger);
-            
+        log.info("------------------------------------------------------------");
+        log.info("STARTING MULTIPLE FINGER CAPTURE FOR FINGERS: {}", Arrays.toString(fingers));
+        log.info("Please place fingers on the scanner...");
+        
+        int timeout = config.getCapture().getTimeout();
+        MultipleFingerCaptureResult multipleResult = scanner.captureMultiple(fingers, timeout);
+        
+        // Segment the multiple finger capture result into individual results
+        List<CaptureResult> captureResults = com.genkey.fingerprint.util.CaptureUtils.segmentCaptureResult(multipleResult, fingers);
+        
+        for (CaptureResult captureResult : captureResults) {
             if (!captureResult.isSuccess()) {
-                log.error("Failed to capture finger {}", finger);
+                log.error("Failed to capture finger {}: {}", captureResult.getFinger(), captureResult.getStatusMessage());
                 continue;
             }
             
             fingerprints.add(FingerprintData.builder()
-                    .finger(finger)
+                    .finger(captureResult.getFinger())
                     .imageData(captureResult.getImageData())
                     .imageFormat(captureResult.getImageFormat())
                     .quality(captureResult.getQuality())
@@ -295,10 +448,10 @@ public class CaptureService {
     }
     
     /**
-     * Get human-readable finger name
+     * Get finger name by ID
      */
-    public static String getFingerName(int finger) {
-        return switch (finger) {
+    private String getFingerName(int fingerId) {
+        return switch (fingerId) {
             case 1 -> "Right Thumb";
             case 2 -> "Right Index";
             case 3 -> "Right Middle";
@@ -309,7 +462,7 @@ public class CaptureService {
             case 8 -> "Left Middle";
             case 9 -> "Left Ring";
             case 10 -> "Left Little";
-            default -> "Unknown Finger " + finger;
+            default -> "Unknown Finger " + fingerId;
         };
     }
 }

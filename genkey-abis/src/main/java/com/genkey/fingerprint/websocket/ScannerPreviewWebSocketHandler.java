@@ -21,6 +21,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 public class ScannerPreviewWebSocketHandler extends TextWebSocketHandler {
 
     private final Set<WebSocketSession> sessions = new CopyOnWriteArraySet<>();
+    private final Object broadcastLock = new Object();
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
@@ -108,7 +109,17 @@ public class ScannerPreviewWebSocketHandler extends TextWebSocketHandler {
      */
     public void broadcastCaptureSuccess(int finger, String fingerName, byte[] imageData, int width, int height) {
         try {
-            byte[] bmpData = convertRawToBmp(imageData, width, height);
+            byte[] bmpData;
+            // Check if data is already in BMP format (starts with "BM")
+            if (imageData != null && imageData.length > 2 && imageData[0] == 66 && imageData[1] == 77) {
+                // Already BMP format, use as-is
+                bmpData = imageData;
+                log.debug("Image data is already in BMP format, skipping conversion");
+            } else {
+                // Raw pixel data, convert to BMP
+                bmpData = convertRawToBmp(imageData, width, height);
+                log.debug("Converted raw pixel data to BMP format");
+            }
             String base64Image = Base64.getEncoder().encodeToString(bmpData);
             
             String jsonMessage = String.format(
@@ -152,13 +163,17 @@ public class ScannerPreviewWebSocketHandler extends TextWebSocketHandler {
             return;
         }
         
-        TextMessage textMessage = new TextMessage(message);
-        for (WebSocketSession session : sessions) {
-            if (session.isOpen()) {
-                try {
-                    session.sendMessage(textMessage);
-                } catch (IOException e) {
-                    log.error("Failed to send message to session {}: {}", session.getId(), e.getMessage());
+        synchronized (broadcastLock) {
+            TextMessage textMessage = new TextMessage(message);
+            for (WebSocketSession session : sessions) {
+                if (session.isOpen()) {
+                    try {
+                        session.sendMessage(textMessage);
+                    } catch (IOException e) {
+                        log.error("Failed to send message to session {}: {}", session.getId(), e.getMessage());
+                    } catch (IllegalStateException e) {
+                        log.warn("WebSocket session in invalid state: {}", e.getMessage());
+                    }
                 }
             }
         }

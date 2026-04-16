@@ -1,4 +1,4 @@
-package com.genkey.fingerprint.model;
+package com.genkey.fingerprint.util;
 
 import java.util.Base64;
 import java.util.HashMap;
@@ -9,6 +9,7 @@ import com.genkey.abisclient.ImageBlob;
 import com.genkey.abisclient.ImageContext;
 import com.genkey.abisclient.ImageData;
 import com.genkey.abisclient.transport.FingerEnrollmentReference;
+import com.genkey.fingerprint.model.CaptureResult;
 import com.genkey.platform.utils.CollectionUtils;
 
 public class CaptureUtils {
@@ -27,7 +28,7 @@ public class CaptureUtils {
 		return result;
 	}
 	
-	public static List<CaptureResult> segmentCaptureResult(MultipleCaptureResult multiCaptureResult, int [] fingers) {
+	public static List<CaptureResult> segmentCaptureResult(MultipleFingerCaptureResult multiCaptureResult, int [] fingers) {
 		
 		ImageData imageData = asImageData(multiCaptureResult);	
 		Map<Integer,Integer> qualityScores = new HashMap<>();

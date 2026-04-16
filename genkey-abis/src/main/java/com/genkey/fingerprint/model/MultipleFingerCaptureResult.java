@@ -8,7 +8,7 @@ import lombok.Data;
  * 
  */
 @Data
-public class MultipleCaptureResult extends CaptureResult{
+public class MultipleFingerCaptureResult extends CaptureResult{
 
 	private int [] fingers;
 	

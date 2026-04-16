@@ -1,7 +1,5 @@
 package com.genkey.fingerprint.model;
 
-import com.genkey.abisclient.ImageData;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,11 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CaptureResult {
     
-    public static CaptureResult copyOf(CaptureResult mc) {
-    	return mc.toBuilder().build();
-    }
-    
-	private boolean success;
+    private boolean success;
     private int statusCode;
     private String statusMessage;
     private int finger;
@@ -29,5 +23,4 @@ public class CaptureResult {
     private int resolution;
     private String templateBase64;
     private long captureTimeMs;
-    
 }

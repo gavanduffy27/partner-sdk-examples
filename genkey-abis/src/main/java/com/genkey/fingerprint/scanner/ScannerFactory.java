@@ -1,6 +1,8 @@
 package com.genkey.fingerprint.scanner;
 
 import com.genkey.fingerprint.config.ScannerConfig;
+import com.genkey.fingerprint.model.CaptureResult;
+import com.genkey.fingerprint.model.MultipleFingerCaptureResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -75,6 +77,16 @@ class FutronicScanner implements FingerprintScanner {
     }
     
     @Override
+    public MultipleFingerCaptureResult captureMultiple(int[] fingers, int timeout) {
+        return MultipleFingerCaptureResult.multiBuilder()
+                .success(false)
+                .statusCode(-99)
+                .statusMessage("Futronic SDK not integrated")
+                .fingers(fingers)
+                .build();
+    }
+    
+    @Override
     public String getDeviceInfo() { return "Futronic Scanner (Not integrated)"; }
     
     @Override
@@ -116,6 +128,16 @@ class DigitalPersonaScanner implements FingerprintScanner {
     }
     
     @Override
+    public MultipleFingerCaptureResult captureMultiple(int[] fingers, int timeout) {
+        return MultipleFingerCaptureResult.multiBuilder()
+                .success(false)
+                .statusCode(-99)
+                .statusMessage("Digital Persona SDK not integrated")
+                .fingers(fingers)
+                .build();
+    }
+    
+    @Override
     public String getDeviceInfo() { return "Digital Persona Scanner (Not integrated)"; }
     
     @Override
@@ -153,6 +175,16 @@ class CrossmatchScanner implements FingerprintScanner {
                 .statusCode(-99)
                 .statusMessage("Crossmatch SDK not integrated")
                 .finger(finger)
+                .build();
+    }
+    
+    @Override
+    public MultipleFingerCaptureResult captureMultiple(int[] fingers, int timeout) {
+        return MultipleFingerCaptureResult.multiBuilder()
+                .success(false)
+                .statusCode(-99)
+                .statusMessage("Crossmatch SDK not integrated")
+                .fingers(fingers)
                 .build();
     }
     

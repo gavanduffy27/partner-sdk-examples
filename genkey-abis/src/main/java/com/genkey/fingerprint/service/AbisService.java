@@ -185,7 +185,6 @@ public class AbisService {
                 FingerEnrollmentReference fingerRef = new FingerEnrollmentReference(fpData.getFinger(), false);
                 
                 // Convert format string to SDK format code for addImage()
-                String imageFormat = getImageFormatCode(fpData.getImageFormat());
                 int resolution = fpData.getResolution() > 0 ? fpData.getResolution() : 500;
                 
                 log.info("Adding enrollment fingerprint: finger={}, resolution={}, dataSize={}", 
@@ -201,7 +200,7 @@ public class AbisService {
                         imageData = new ImageData(fpData.getWidth(), fpData.getHeight(), fpData.getImageData(), resolution);
                     } else {
                         // Use default constructor for encoded data
-                        imageData = new ImageData(fpData.getImageData(), imageFormat, resolution);
+                        imageData = new ImageData(fpData.getImageData(), originalFormat, resolution);
                     }
                     // Always use WSQ as the supported storage format constant for addImageData
                     fingerRef.addImageData(imageData, ImageData.FORMAT_WSQ);
@@ -534,29 +533,4 @@ public class AbisService {
         }
     }
     
-    /**
-     * Convert format string to ABIS SDK integer format code.
-     * The addImage() method expects integer format constants: ImageData.FORMAT_BMP or ImageData.FORMAT_WSQ
-     * Other formats will default to ImageData.FORMAT_BMP.
-     */
-    private String getImageFormatCode(String format) {
-        if (format == null) {
-            return ImageData.FORMAT_BMP; // Default to BMP format
-        }
-        String upperFormat = format.toUpperCase();
-        if ("RAW".equals(upperFormat)) {
-            return ImageData.FORMAT_WSQ;
-        }
-        switch (upperFormat) {
-            case "WSQ":
-                return ImageData.FORMAT_WSQ;
-            case "BMP":
-            case "PNG":
-            case "JPEG":
-            case "JPG":
-            default:
-                // SDK constant for BMP
-                return ImageData.FORMAT_BMP;
-        }
-    }
 }

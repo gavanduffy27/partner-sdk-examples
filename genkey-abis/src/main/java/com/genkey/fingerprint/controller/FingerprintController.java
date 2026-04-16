@@ -87,7 +87,7 @@ public class FingerprintController {
     @PostMapping("/capture/multiple")
     @Operation(summary = "Capture multiple fingerprints", description = "Capture fingerprints for multiple fingers")
     public ResponseEntity<List<CaptureResult>> captureMultiple(@RequestBody int[] fingers) {
-        List<CaptureResult> results = captureService.captureMultipleFingers(fingers);
+        List<CaptureResult> results = captureService.captureMultipleFingersSlap(fingers);
         
         // Encode image data as base64
         for (CaptureResult result : results) {
@@ -112,6 +112,67 @@ public class FingerprintController {
         
         EnrollmentResponse response = captureService.captureAndEnroll(subjectId, firstName, lastName, fingers);
         return ResponseEntity.ok(response);
+    }
+    
+    @PostMapping("/enroll/capture-only")
+    @Operation(summary = "Capture for enrollment", description = "Capture fingerprints without enrolling (two-step enrollment)")
+    public ResponseEntity<List<CaptureResult>> captureForEnrollment(
+            @RequestParam String subjectId,
+            @RequestBody int[] fingers) {
+        
+        List<CaptureResult> results = captureService.captureForEnrollment(subjectId, fingers);
+        
+        // Encode image data as base64
+        for (CaptureResult result : results) {
+            if (result.getImageData() != null) {
+                result.setTemplateBase64(Base64.getEncoder().encodeToString(result.getImageData()));
+                result.setImageData(null);
+            }
+        }
+        
+        return ResponseEntity.ok(results);
+    }
+    
+    @PostMapping("/enroll/confirm")
+    @Operation(summary = "Enroll captured fingerprints", description = "Enroll previously captured fingerprints (two-step enrollment)")
+    public ResponseEntity<EnrollmentResponse> enrollCapturedFingers(
+            @RequestParam String subjectId,
+            @RequestParam(required = false) String firstName,
+            @RequestParam(required = false) String lastName) {
+        
+        EnrollmentResponse response = captureService.enrollCapturedFingers(subjectId, firstName, lastName);
+        return ResponseEntity.ok(response);
+    }
+    
+    @GetMapping("/enroll/pending/{subjectId}")
+    @Operation(summary = "Get pending fingerprints", description = "Get pending fingerprints for a subject")
+    public ResponseEntity<Map<String, Object>> getPendingFingerprints(@PathVariable String subjectId) {
+        List<FingerprintData> fingerprints = captureService.getPendingFingerprints(subjectId);
+        
+        return ResponseEntity.ok(Map.of(
+                "subjectId", subjectId,
+                "hasPending", fingerprints != null && !fingerprints.isEmpty(),
+                "fingerCount", fingerprints != null ? fingerprints.size() : 0,
+                "fingerprints", fingerprints != null ? 
+                        fingerprints.stream().map(fp -> Map.of(
+                                "finger", fp.getFinger(),
+                                "quality", fp.getQuality(),
+                                "width", fp.getWidth(),
+                                "height", fp.getHeight(),
+                                "resolution", fp.getResolution()
+                        )).toList() : List.of()
+        ));
+    }
+    
+    @DeleteMapping("/enroll/pending/{subjectId}")
+    @Operation(summary = "Clear pending fingerprints", description = "Clear pending fingerprints for a subject")
+    public ResponseEntity<Map<String, Object>> clearPendingFingerprints(@PathVariable String subjectId) {
+        captureService.clearPendingFingerprints(subjectId);
+        return ResponseEntity.ok(Map.of(
+                "subjectId", subjectId,
+                "cleared", true,
+                "message", "Pending enrollment cleared"
+        ));
     }
     
     @PostMapping("/enroll")

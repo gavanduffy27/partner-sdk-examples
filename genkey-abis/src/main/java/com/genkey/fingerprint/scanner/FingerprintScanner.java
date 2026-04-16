@@ -1,7 +1,7 @@
 package com.genkey.fingerprint.scanner;
 
 import com.genkey.fingerprint.model.CaptureResult;
-import com.genkey.fingerprint.model.MultipleCaptureResult;
+import com.genkey.fingerprint.model.MultipleFingerCaptureResult;
 
 /**
  * Interface for fingerprint scanner implementations.
@@ -29,8 +29,13 @@ public interface FingerprintScanner {
      */
     CaptureResult capture(int finger, int timeout);
     
-    //GD added metnod on interface for multiple finger capture
-    MultipleCaptureResult captureMultiple(int [] fingers, int timeOut);
+    /**
+     * Capture multiple fingerprints in a single image
+     * @param fingers array of finger positions (1-10)
+     * @param timeout timeout in milliseconds
+     * @return MultipleFingerCaptureResult containing image data and status
+     */
+    MultipleFingerCaptureResult captureMultiple(int[] fingers, int timeout);
     
     /**
      * Get scanner device information

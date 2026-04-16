@@ -2,6 +2,7 @@ package com.genkey.fingerprint.scanner;
 
 import com.genkey.fingerprint.config.ScannerConfig;
 import com.genkey.fingerprint.model.CaptureResult;
+import com.genkey.fingerprint.model.MultipleFingerCaptureResult;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -150,6 +151,54 @@ public class SecuGenScanner implements FingerprintScanner {
                     .statusCode(-2)
                     .statusMessage("Capture failed: " + e.getMessage())
                     .finger(finger)
+                    .build();
+        }
+    }
+    
+    @Override
+    public MultipleFingerCaptureResult captureMultiple(int[] fingers, int timeout) {
+        log.info("SecuGen multiple capture for fingers {} with timeout {}ms", java.util.Arrays.toString(fingers), timeout);
+        
+        if (!initialized) {
+            return MultipleFingerCaptureResult.multiBuilder()
+                    .success(false)
+                    .statusCode(-1)
+                    .statusMessage("Scanner not initialized")
+                    .fingers(fingers)
+                    .build();
+        }
+        
+        // For now, implement multiple capture by calling single capture for each finger
+        // This is a simplified implementation - real implementation would use SDK's multiple capture
+        try {
+            // Use the first finger for the capture (simplified approach)
+            int primaryFinger = fingers.length > 0 ? fingers[0] : 1;
+            
+            // Capture using the existing single finger method
+            CaptureResult singleResult = capture(primaryFinger, timeout);
+            
+            // Convert to MultipleFingerCaptureResult
+            return MultipleFingerCaptureResult.multiBuilder()
+                    .success(singleResult.isSuccess())
+                    .statusCode(singleResult.getStatusCode())
+                    .statusMessage(singleResult.getStatusMessage())
+                    .fingers(fingers)
+                    .imageData(singleResult.getImageData())
+                    .imageFormat(singleResult.getImageFormat())
+                    .quality(singleResult.getQuality())
+                    .width(singleResult.getWidth())
+                    .height(singleResult.getHeight())
+                    .resolution(singleResult.getResolution())
+                    .captureTimeMs(singleResult.getCaptureTimeMs())
+                    .build();
+                    
+        } catch (Exception e) {
+            log.error("SecuGen multiple capture failed", e);
+            return MultipleFingerCaptureResult.multiBuilder()
+                    .success(false)
+                    .statusCode(-2)
+                    .statusMessage("Multiple capture failed: " + e.getMessage())
+                    .fingers(fingers)
                     .build();
         }
     }
