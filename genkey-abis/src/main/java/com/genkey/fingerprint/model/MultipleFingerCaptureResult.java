@@ -1,5 +1,6 @@
 package com.genkey.fingerprint.model;
 
+import lombok.Builder;
 import lombok.Data;
 
 /**
@@ -7,9 +8,17 @@ import lombok.Data;
  * that information is provided by the scanner.
  * 
  */
+
 @Data
 public class MultipleFingerCaptureResult extends CaptureResult{
 
 	private int [] fingers;
+
+	public MultipleFingerCaptureResult(CaptureResult captureResult, int [] fingers) {
+		CaptureResult.copyTo(captureResult, this);
+		this.setFinger(0);
+		this.setFingers(fingers);
+		
+	}
 	
 }

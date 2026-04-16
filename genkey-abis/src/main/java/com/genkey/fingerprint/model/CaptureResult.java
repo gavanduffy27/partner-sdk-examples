@@ -23,4 +23,19 @@ public class CaptureResult {
     private int resolution;
     private String templateBase64;
     private long captureTimeMs;
+    
+    public static void copyTo(CaptureResult source, CaptureResult target) {
+    	target.success=source.success;
+    	target.statusCode=source.statusCode;
+    	target.statusMessage=source.statusMessage;
+    	target.finger=source.finger;
+    	target.imageData=source.imageData;
+    	target.imageFormat=source.getImageFormat();
+    	target.quality=source.quality;
+    	target.width=source.width;
+		target.height=source.height;        
+    	target.resolution=source.resolution;
+    	target.captureTimeMs=source.captureTimeMs;
+    }
+    
 }

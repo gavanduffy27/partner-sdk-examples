@@ -78,12 +78,12 @@ class FutronicScanner implements FingerprintScanner {
     
     @Override
     public MultipleFingerCaptureResult captureMultiple(int[] fingers, int timeout) {
-        return MultipleFingerCaptureResult.multiBuilder()
+    	CaptureResult result = CaptureResult.builder()
                 .success(false)
                 .statusCode(-99)
                 .statusMessage("Futronic SDK not integrated")
-                .fingers(fingers)
                 .build();
+    	return new MultipleFingerCaptureResult(result, fingers);
     }
     
     @Override
@@ -129,12 +129,12 @@ class DigitalPersonaScanner implements FingerprintScanner {
     
     @Override
     public MultipleFingerCaptureResult captureMultiple(int[] fingers, int timeout) {
-        return MultipleFingerCaptureResult.multiBuilder()
+        CaptureResult result = CaptureResult.builder()
                 .success(false)
                 .statusCode(-99)
                 .statusMessage("Digital Persona SDK not integrated")
-                .fingers(fingers)
                 .build();
+        return new MultipleFingerCaptureResult(result, fingers);
     }
     
     @Override
@@ -180,12 +180,12 @@ class CrossmatchScanner implements FingerprintScanner {
     
     @Override
     public MultipleFingerCaptureResult captureMultiple(int[] fingers, int timeout) {
-        return MultipleFingerCaptureResult.multiBuilder()
+    	CaptureResult result = CaptureResult.builder()
                 .success(false)
                 .statusCode(-99)
                 .statusMessage("Crossmatch SDK not integrated")
-                .fingers(fingers)
                 .build();
+    	return new MultipleFingerCaptureResult(result, fingers);
     }
     
     @Override
