@@ -31,25 +31,22 @@ public class CaptureUtils {
 	public static List<CaptureResult> segmentCaptureResult(MultipleFingerCaptureResult multiCaptureResult, int [] fingers) {
 		
 		ImageData imageData = asImageData(multiCaptureResult);	
-		Map<Integer,Integer> qualityScores = new HashMap<>();
-		Map<Integer, ImageData> segments = segmentImage(imageData, fingers, qualityScores); 
+		Map<Integer, ImageData> segments = segmentImage(imageData, fingers); 
 		
 		List<CaptureResult> captureSegments = CollectionUtils.newList();
 		for(Map.Entry<Integer, ImageData> entry : segments.entrySet()) {
 			int fingerId = entry.getKey();
 			ImageData segment = entry.getValue();
-			int qualityScore = qualityScores.get(fingerId);
-			CaptureResult result = asCaptureResult(multiCaptureResult, segment, fingerId, qualityScore, "RAW");
+			CaptureResult result = asCaptureResult(multiCaptureResult, segment, fingerId, FORMAT_RAW);
 			captureSegments.add(result);
 		}
 		return captureSegments;
 	}
 	
-	public static CaptureResult asCaptureResult(CaptureResult mc, ImageData segment, int fingerId, int qualityScore, String format) {
+	public static CaptureResult asCaptureResult(CaptureResult mc, ImageData segment, int fingerId, String format) {
 		byte [] imageData = segment.getPixelData();
 		return ((CaptureResult) mc).toBuilder().finger(fingerId)
 					.height(segment.getHeight()).width(segment.getWidth())
-					.quality(qualityScore)
 					.imageData(imageData)
 					.imageFormat(format)
 					.build();
@@ -63,7 +60,7 @@ public class CaptureUtils {
 	 * @param qualityScores 
 	 * @return
 	 */
-	public static Map<Integer, ImageData> segmentImage(ImageData imageData, int[] fingers, Map<Integer,Integer> qualityScores) {
+	public static Map<Integer, ImageData> segmentImage(ImageData imageData, int[] fingers) {
 		ImageContext imageContext = new ImageContext(imageData, fingers);
 		if (imageContext.isBlocked()) {
 			return null;
@@ -74,9 +71,6 @@ public class CaptureUtils {
 			int fingerId=fingerIds[ix];
 			ImageData segment = imageContext.extractImageSegment(ix);
 			result.put(fingerId, segment);
-			if (qualityScores != null) {
-				qualityScores.put(fingerId, imageContext.getQualityInfo(ix).getQualityScore());
-			}
 		}
 		return result;
 	}
