@@ -14,7 +14,9 @@ import com.genkey.abisclient.transport.FingerEnrollmentReference;
 import com.genkey.abisclient.ImageBlob;
 import com.genkey.abisclient.transport.SubjectEnrollmentReference;
 import com.genkey.fingerprint.config.AbisConfig;
+import com.genkey.fingerprint.controller.EnrollmentDataContainer;
 import com.genkey.fingerprint.model.*;
+import com.genkey.fingerprint.util.CaptureUtils;
 import com.genkey.partner.biographic.BiographicProfileRecord;
 import com.genkey.partner.biographic.BiographicService;
 import com.genkey.partner.dgie.DGIEServiceModule;
@@ -134,12 +136,23 @@ public class AbisService {
                     .statusMessage("ABIS Service not initialized")
                     .build();
         }
+
+        String subjectId = request.getSubjectId();
+        if (CaptureUtils.isNullRequest(request)) {
+            return EnrollmentResponse.builder()
+                    .success(false)
+                    .subjectId(subjectId)
+                    .statusCode(400)
+                    .statusMessage("Enrollment failed: No fingerprint or face data provided")
+                    .processingTimeMs(System.currentTimeMillis() - startTime)
+                    .build();
+        }
+
         
         try {
             GenkeyABISService abisService = ABISServiceModule.getABISService();
             BiographicService biographicService = DGIEServiceModule.getBiographicService();
             
-            String subjectId = request.getSubjectId();
             
             // Check if subject already exists
             if (abisService.existsSubject(subjectId)) {
@@ -152,69 +165,12 @@ public class AbisService {
                         .build();
             }
             
-            // Create enrollment reference
-            SubjectEnrollmentReference enrollmentRef = new SubjectEnrollmentReference(subjectId);
-            if (request.getTargetFingers() != null && request.getTargetFingers().length > 0) {
-                enrollmentRef.setTargetFingers(request.getTargetFingers());
-            } else if (request.getFingerprints() != null && !request.getFingerprints().isEmpty()) {
-                int[] inferredTargets = request.getFingerprints().stream().mapToInt(FingerprintData::getFinger).toArray();
-                enrollmentRef.setTargetFingers(inferredTargets);
-            }
-            if (request.getFaceImage() != null && request.getFaceImage().length > 0) {
-                String faceFormat = request.getFaceImageFormat() != null ? request.getFaceImageFormat() : "JPG";
-                log.info("Setting face portrait for enrollment subject={}, format={}, bytes={}",
-                        subjectId, faceFormat, request.getFaceImage().length);
-                enrollmentRef.setFacePortrait(new ImageBlob(request.getFaceImage(), faceFormat));
-            }
+            EnrollmentDataContainer container = new EnrollmentDataContainer(subjectId);
+            container.addBiometricRequest(request);
 
-            if ((request.getFingerprints() == null || request.getFingerprints().isEmpty()) &&
-                    (request.getFaceImage() == null || request.getFaceImage().length == 0)) {
-                return EnrollmentResponse.builder()
-                        .success(false)
-                        .subjectId(subjectId)
-                        .statusCode(400)
-                        .statusMessage("Enrollment failed: No fingerprint or face data provided")
-                        .processingTimeMs(System.currentTimeMillis() - startTime)
-                        .build();
-            }
-
-            // Process each fingerprint
-            if (request.getFingerprints() != null) {
-                for (FingerprintData fpData : request.getFingerprints()) {
-                // Create finger reference - DISABLE autoExtract to prevent native crashes
-                FingerEnrollmentReference fingerRef = new FingerEnrollmentReference(fpData.getFinger(), false);
-                
-                // Convert format string to SDK format code for addImage()
-                int resolution = fpData.getResolution() > 0 ? fpData.getResolution() : 500;
-                
-                log.info("Adding enrollment fingerprint: finger={}, resolution={}, dataSize={}", 
-                         fpData.getFinger(), resolution,
-                         fpData.getImageData() != null ? fpData.getImageData().length : 0);
-                
-                // Use ImageData wrapper and addImageData() instead of direct addImage()
-                try {
-                    ImageData imageData;
-                    String originalFormat = fpData.getImageFormat();
-                    if ("RAW".equalsIgnoreCase(originalFormat)) {
-                        // Use raw constructor for (width, height, data, resolution)
-                        imageData = new ImageData(fpData.getWidth(), fpData.getHeight(), fpData.getImageData(), resolution);
-                    } else {
-                        // Use default constructor for encoded data
-                        imageData = new ImageData(fpData.getImageData(), originalFormat, resolution);
-                    }
-                    // Always use WSQ as the supported storage format constant for addImageData
-                    fingerRef.addImageData(imageData, ImageData.FORMAT_WSQ);
-                } catch (Exception inner) {
-                    log.error("Failed to add image for finger {}: {}", fpData.getFinger(), inner.getMessage(), inner);
-                    throw new RuntimeException("Enrollment failed for finger " + fpData.getFinger(), inner);
-                }
-                enrollmentRef.add(fingerRef);
-                }
-            }
-            
             
             // Perform enrollment
-            MatchEngineResponse response = abisService.insertSubject(enrollmentRef, false);
+            MatchEngineResponse response = abisService.insertSubject(container.getEnrolmentReference(), false);
             
             if (response.isSuccess()) {
                 // Create biographic record
@@ -287,19 +243,26 @@ public class AbisService {
                     .statusMessage("ABIS Service not initialized")
                     .build();
         }
+
+
+        String subjectId = request.getSubjectId();
+        if (CaptureUtils.isNullRequest(request)) {
+            return com.genkey.fingerprint.model.VerifyResponse.builder()
+                    .verified(false)
+                    .subjectId(subjectId)
+                    .statusCode(400)
+                    .statusMessage("Verification failed: No fingerprint or face data provided")
+                    .processingTimeMs(System.currentTimeMillis() - startTime)
+                    .build();
+        }
+
         
         try {
             GenkeyABISService abisService = ABISServiceModule.getABISService();
-            String subjectId = request.getSubjectId();
-            
-            boolean subjectExists = true;
-            if (request.getFaceImage() != null && request.getFaceImage().length > 0 &&
-                    (request.getFingerprints() == null || request.getFingerprints().isEmpty())) {
-                log.info("Face-only verify request for subject {}: skipping subject exists check", subjectId);
-            } else {
-                subjectExists = abisService.existsSubject(subjectId);
-            }
-            
+        
+            // Note this will also check for face only subjects 
+            boolean subjectExists = abisService.existsSubject(subjectId);
+                    
             if (!subjectExists) {
                 return com.genkey.fingerprint.model.VerifyResponse.builder()
                         .verified(false)
@@ -310,54 +273,13 @@ public class AbisService {
                         .build();
             }
             
-            // Create verification reference
-            SubjectEnrollmentReference verifyRef = new SubjectEnrollmentReference(subjectId);
-            if (request.getTargetFingers() != null && request.getTargetFingers().length > 0) {
-                verifyRef.setTargetFingers(request.getTargetFingers());
-            } else if (request.getFingerprints() != null && !request.getFingerprints().isEmpty()) {
-                verifyRef.setTargetFingers(request.getFingerprints().stream().mapToInt(FingerprintData::getFinger).toArray());
-            }
-            if (request.getFaceImage() != null && request.getFaceImage().length > 0) {
-                String faceFormat = request.getFaceImageFormat() != null ? request.getFaceImageFormat() : "JPG";
-                verifyRef.setFacePortrait(new ImageBlob(request.getFaceImage(), faceFormat));
-            }
-
-            if ((request.getFingerprints() == null || request.getFingerprints().isEmpty()) &&
-                    (request.getFaceImage() == null || request.getFaceImage().length == 0)) {
-                return com.genkey.fingerprint.model.VerifyResponse.builder()
-                        .verified(false)
-                        .subjectId(subjectId)
-                        .statusCode(400)
-                        .statusMessage("Verification failed: No fingerprint or face data provided")
-                        .processingTimeMs(System.currentTimeMillis() - startTime)
-                        .build();
-            }
             
-            // Process fingerprints if provided
-            if (request.getFingerprints() != null) {
-                for (FingerprintData fpData : request.getFingerprints()) {
-                    FingerEnrollmentReference fingerRef = new FingerEnrollmentReference(fpData.getFinger(), false);
-                    String imageFormat = getImageFormatCode(fpData.getImageFormat());
-                    int resolution = fpData.getResolution() > 0 ? fpData.getResolution() : 500;
-                    
-                    try {
-                        ImageData imageData;
-                        if ("RAW".equalsIgnoreCase(fpData.getImageFormat())) {
-                            imageData = new ImageData(fpData.getWidth(), fpData.getHeight(), fpData.getImageData(), resolution);
-                        } else {
-                            imageData = new ImageData(fpData.getImageData(), imageFormat, resolution);
-                        }
-                        fingerRef.addImageData(imageData, ImageData.FORMAT_WSQ);
-                    } catch (Exception e) {
-                        log.error("Failed to add image for verification: {}", e.getMessage());
-                        throw new RuntimeException("Verification setup failed", e);
-                    }
-                    verifyRef.add(fingerRef);
-                }
-            }
+
+            EnrollmentDataContainer container = new EnrollmentDataContainer(subjectId);
+            container.addBiometricRequest(request);
             
             // Perform verification
-            VerifyResponse verifyResponse = abisService.verifySubject(verifyRef);
+            VerifyResponse verifyResponse = abisService.verifySubject(container.getEnrolmentReference());
             
             double matchScore = 0.0;
             if (verifyResponse != null && verifyResponse.getMatchResult() != null) {
@@ -405,69 +327,23 @@ public class AbisService {
                     .build();
         }
         
+        if (CaptureUtils.isNullRequest(request)) {
+            return IdentifyResponse.builder()
+                    .found(false)
+                    .statusCode(400)
+                    .statusMessage("Identification failed: No fingerprint or face data provided")
+                    .processingTimeMs(System.currentTimeMillis() - startTime)
+                    .build();        	
+        }
+        
         try {
             GenkeyABISService abisService = ABISServiceModule.getABISService();
-            
-            // Create identification reference
-            SubjectEnrollmentReference identifyRef = new SubjectEnrollmentReference();
-            if (request.getTargetFingers() != null && request.getTargetFingers().length > 0) {
-                identifyRef.setTargetFingers(request.getTargetFingers());
-            } else if (request.getFingerprints() != null && !request.getFingerprints().isEmpty()) {
-                identifyRef.setTargetFingers(request.getFingerprints().stream().mapToInt(FingerprintData::getFinger).toArray());
-            }
-            if (request.getFaceImage() != null && request.getFaceImage().length > 0) {
-                String faceFormat = request.getFaceImageFormat() != null ? request.getFaceImageFormat() : "JPG";
-                identifyRef.setFacePortrait(new ImageBlob(request.getFaceImage(), faceFormat));
-            }
 
-            if ((request.getFingerprints() == null || request.getFingerprints().isEmpty()) &&
-                    (request.getFaceImage() == null || request.getFaceImage().length == 0)) {
-                return IdentifyResponse.builder()
-                        .found(false)
-                        .statusCode(400)
-                        .statusMessage("Identification failed: No fingerprint or face data provided")
-                        .processingTimeMs(System.currentTimeMillis() - startTime)
-                        .build();
-            }
-            
-            // Process fingerprints
-            if (request.getFingerprints() != null) {
-                for (FingerprintData fpData : request.getFingerprints()) {
-                    // Disable autoExtract for identification to prevent native crashes
-                    FingerEnrollmentReference fingerRef = new FingerEnrollmentReference(fpData.getFinger(), false);
-                
-                // Convert format string to SDK format code
-                String imageFormat = getImageFormatCode(fpData.getImageFormat());
-                int resolution = fpData.getResolution() > 0 ? fpData.getResolution() : 500;
-                
-                log.info("Adding identification fingerprint: finger={}, resolution={}, dataSize={}", 
-                         fpData.getFinger(), resolution, 
-                         fpData.getImageData() != null ? fpData.getImageData().length : 0);
-                
-                // Use ImageData wrapper and addImageData() instead of direct addImage()
-                try {
-                    ImageData imageData;
-                    String originalFormat = fpData.getImageFormat();
-                    if ("RAW".equalsIgnoreCase(originalFormat)) {
-                        // Use raw constructor
-                        imageData = new ImageData(fpData.getWidth(), fpData.getHeight(), fpData.getImageData(), resolution);
-                    } else {
-                        // Use default constructor
-                        imageData = new ImageData(fpData.getImageData(), imageFormat, resolution);
-                    }
-                    // Always use WSQ as the supported storage format constant for addImageData
-                    fingerRef.addImageData(imageData, ImageData.FORMAT_WSQ);
-                } catch (Exception e) {
-                    log.error("Failed to add image for identification: {}", e.getMessage(), e);
-                    throw new RuntimeException("Identification setup failed", e);
-                }
-                identifyRef.add(fingerRef);
-                }
-            }
-            
+            EnrollmentDataContainer container = new EnrollmentDataContainer();
+            container.addBiometricRequest(request);
             
             // Perform identification (1:N search) using querySubject
-            MatchEngineResponse response = abisService.querySubject(identifyRef, false);
+            MatchEngineResponse response = abisService.querySubject(container.getEnrolmentReference());
             
             List<MatchResultInfo> candidates = new ArrayList<>();
             if (response.hasMatchResults()) {
