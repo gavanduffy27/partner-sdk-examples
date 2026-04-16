@@ -13,8 +13,11 @@ import com.genkey.abisclient.service.VerifyResponse;
 import com.genkey.abisclient.service.params.EnquireStatus;
 import com.genkey.abisclient.transport.FingerEnrollmentReference;
 import com.genkey.abisclient.transport.SubjectEnrollmentReference;
+import com.genkey.fingerprint.model.BiometricRequest;
 import com.genkey.fingerprint.model.CaptureResult;
+import com.genkey.fingerprint.model.FingerprintData;
 import com.genkey.fingerprint.model.MultipleFingerCaptureResult;
+import com.genkey.fingerprint.util.CaptureUtils;
 import com.genkey.partner.biographic.BiographicProfileRecord;
 import com.genkey.partner.biographic.BiographicService;
 import com.genkey.partner.dgie.DGIEServiceModule;
@@ -46,18 +49,29 @@ public class EnrollmentDataContainer {
 		this.setAutoExtract(autoExtract);
 	}
 	
+	public void addBiometricRequest(BiometricRequest request) {
+		for(FingerprintData fp : request.getFingerprints()) {
+			addFingerData(fp);
+		}
+		this.addFacePortrait(request.getFaceImage(), request.getFaceImageFormat());
+	}
+	
+	public void addFingerData(FingerprintData fpData) {
+		ImageData imageData = CaptureUtils.asImageData(fpData);
+		this.addImageData(imageData, fpData.getFinger());
+	}
 
 	public void addFacePortrait(byte [] imageEncoding, String format) {
 		this.getEnrolmentReference().setFacePortrait(new ImageBlob(imageEncoding, format));
 	}
 	
 	public void addSingleFingerCapture(CaptureResult result) {
-		addImageData(asImageData(result), result.getFinger());
+		addImageData(CaptureUtils.asImageData(result), result.getFinger());
 	}
 	
 	public void addMultipleFingerCapture(MultipleFingerCaptureResult result) {
-		ImageData fullImage = asImageData(result);
-		Map<Integer, ImageData> segmentMap = segmentImage(fullImage, result.getFingers());
+		ImageData fullImage = CaptureUtils.asImageData(result);
+		Map<Integer, ImageData> segmentMap = CaptureUtils.segmentImage(fullImage, result.getFingers());
 		for(Map.Entry<Integer, ImageData> entry : segmentMap.entrySet()) {
 			this.addImageData(entry.getValue(), entry.getKey());
 		}
@@ -68,34 +82,6 @@ public class EnrollmentDataContainer {
 		enrollRef.addImageData(imageData, ImageData.FORMAT_WSQ);		
 		this.getEnrolmentReference().add(enrollRef);
 	}
-
-	
-	private static ImageData asImageData(CaptureResult captureResult) {
-		String format  = captureResult.getImageFormat();
-		ImageData result;
-		if (format.equalsIgnoreCase(FORMAT_RAW)) {
-			result = new ImageData(captureResult.getWidth(), captureResult.getHeight(), captureResult.getImageData(), captureResult.getResolution());
-		} else {
-			result = new ImageData(captureResult.getImageData(), captureResult.getImageFormat());
-		}
-		return result;
-	}
-
-	private static Map<Integer, ImageData> segmentImage(ImageData imageData, int[] fingers) {
-		ImageContext imageContext = new ImageContext(imageData, fingers);
-		if (imageContext.isBlocked()) {
-			return null;
-		}
-		Map<Integer, ImageData> result = new HashMap<>();
-		int fingerIds[] = imageContext.getFingers();
-		for(int ix=0; ix < imageContext.count(); ix++) {
-			int fingerId=fingerIds[ix];
-			ImageData segment = imageContext.extractImageSegment(ix);
-			result.put(fingerId, segment);
-		}
-		return result;
-	}
-	
 	
 	public SubjectEnrollmentReference getEnrolmentReference() {
 		if (enrolmentReference == null) {
