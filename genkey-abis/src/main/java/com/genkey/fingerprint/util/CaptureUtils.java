@@ -1,15 +1,21 @@
 package com.genkey.fingerprint.util;
 
+import java.io.IOException;
 import java.util.Base64;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.springframework.web.multipart.MultipartFile;
 
 import com.genkey.abisclient.ImageBlob;
 import com.genkey.abisclient.ImageContext;
 import com.genkey.abisclient.ImageData;
 import com.genkey.abisclient.transport.FingerEnrollmentReference;
+import com.genkey.fingerprint.model.BiometricRequest;
 import com.genkey.fingerprint.model.CaptureResult;
+import com.genkey.fingerprint.model.MultipleFingerCaptureResult;
 import com.genkey.fingerprint.model.FingerprintData;
 import com.genkey.platform.utils.CollectionUtils;
 
@@ -17,6 +23,9 @@ public class CaptureUtils {
 	
 
 	public static final String FORMAT_RAW = "RAW";
+	public static final String FORMAT_BMP = "BMP";
+	public static final String FORMAT_WSQ = "WSQ";
+	public static final String FORMAT_JPEG = "JPEG";
 
 	
 	public static ImageData asImageData(CaptureResult captureResult) {
@@ -40,6 +49,21 @@ public class CaptureUtils {
 		return result;
 	}
 	
+	public static ImageData asImageData(MultipartFile file, int resolution) throws IOException {
+        String filename = file.getOriginalFilename();
+        String format = filename != null && filename.contains(".") ? 
+                filename.substring(filename.lastIndexOf(".") + 1).toUpperCase() : FORMAT_BMP;
+        byte [] imageData = file.getBytes();
+        return new ImageData(imageData, format, resolution);
+	}
+	
+	public static ImageBlob asImageBlob(MultipartFile file) throws IOException {
+        String filename = file.getOriginalFilename();
+        String format = filename != null && filename.contains(".") ? 
+                filename.substring(filename.lastIndexOf(".") + 1).toUpperCase() : FORMAT_JPEG;
+        byte [] imageData = file.getBytes();
+        return new ImageBlob(imageData, format);		
+	}
 	
 	public static List<CaptureResult> segmentCaptureResult(MultipleFingerCaptureResult multiCaptureResult, int [] fingers) {
 		
@@ -90,6 +114,14 @@ public class CaptureUtils {
 	
 	public static FingerEnrollmentReference asFingerEnrollmentReference(CaptureResult captureResult) {
 		return null;
+	}
+
+	public static boolean isNullRequest(BiometricRequest request) {
+		return isNullArray(request.getFaceImage()) || isNullContainer(request.getFingerprints());
+	}
+	
+	public static boolean isNullContainer(Collection<?> container) {
+		return container == null || container.size()==0;
 	}
 
 	public static boolean isNullArray(byte [] array) {

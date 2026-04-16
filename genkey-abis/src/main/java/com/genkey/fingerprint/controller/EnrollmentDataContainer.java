@@ -1,7 +1,12 @@
 package com.genkey.fingerprint.controller;
 
+import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+
+import org.springframework.web.multipart.MultipartFile;
 
 import com.genkey.abisclient.ImageBlob;
 import com.genkey.abisclient.ImageContext;
@@ -77,6 +82,25 @@ public class EnrollmentDataContainer {
 		}
 	}
 
+	/**
+	 * Upload image files into container
+	 * @param imageFiles
+	 * @param fingers
+	 * @param resolution
+	 * @throws IOException
+	 */
+	public void importUploadFingerPrints(List<MultipartFile> imageFiles, int [] fingers, int resolution) throws IOException {
+		for(int ix=0; ix < imageFiles.size(); ix++) {
+			ImageData imageData = CaptureUtils.asImageData(imageFiles.get(ix), resolution);
+			this.addImageData(imageData, fingers[ix]);
+		}
+	}
+	
+	public void importUploadFace(MultipartFile faceFile) throws IOException {
+		ImageBlob imageBlob = CaptureUtils.asImageBlob(faceFile);
+		this.getEnrolmentReference().setFacePortrait(imageBlob);
+	}
+	
 	public void addImageData(ImageData imageData, int fingerId) {
 		FingerEnrollmentReference enrollRef = new FingerEnrollmentReference(fingerId, autoExtract);
 		enrollRef.addImageData(imageData, ImageData.FORMAT_WSQ);		
