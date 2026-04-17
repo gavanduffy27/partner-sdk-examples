@@ -111,7 +111,7 @@ public class CaptureUtils {
 	 */
 	public static Map<Integer, ImageData> segmentImage(ImageData imageData, int[] fingers) {
 		if (CaptureUtils.isImageRotation()) {
-			ImageUtils.rotateImageData(imageData, Math.PI);
+			imageData = ImageUtils.rotateImageData(imageData, Math.PI);
 		}
 		ImageContext imageContext = new ImageContext(imageData, fingers);
 		if (imageContext.isBlocked()) {
