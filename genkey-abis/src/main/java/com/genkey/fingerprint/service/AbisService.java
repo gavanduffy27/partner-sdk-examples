@@ -125,6 +125,7 @@ public class AbisService {
         long startTime = System.currentTimeMillis();
         
         if (!initialized) {
+        	log.error("Failing because system not initialised");
             return EnrollmentResponse.builder()
                     .success(false)
                     .statusCode(-1)
@@ -134,6 +135,7 @@ public class AbisService {
 
         String subjectId = request.getSubjectId();
         if (CaptureUtils.isNullRequest(request)) {
+        	log.error("Failing because of null request for {}", subjectId);
             return EnrollmentResponse.builder()
                     .success(false)
                     .subjectId(subjectId)
@@ -151,6 +153,7 @@ public class AbisService {
             
             // Check if subject already exists
             if (abisService.existsSubject(subjectId)) {
+            	log.warn("Exiting call on insert for existing subject {}", subjectId);
                 return EnrollmentResponse.builder()
                         .success(false)
                         .subjectId(subjectId)

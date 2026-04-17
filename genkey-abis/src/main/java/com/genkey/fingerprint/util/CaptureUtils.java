@@ -136,7 +136,7 @@ public class CaptureUtils {
 	}
 
 	public static boolean isNullRequest(BiometricRequest request) {
-		return isNullArray(request.getFaceImage()) || isNullContainer(request.getFingerprints());
+		return isNullArray(request.getFaceImage()) && isNullContainer(request.getFingerprints());
 	}
 
 	public static boolean isNullContainer(Collection<?> container) {
