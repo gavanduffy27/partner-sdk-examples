@@ -235,6 +235,7 @@ public class AbisService {
         long startTime = System.currentTimeMillis();
         
         if (!initialized) {
+        	log.error("Exiting on system not initialized");
             return com.genkey.fingerprint.model.VerifyResponse.builder()
                     .verified(false)
                     .statusCode(-1)
@@ -245,6 +246,7 @@ public class AbisService {
 
         String subjectId = request.getSubjectId();
         if (CaptureUtils.isNullRequest(request)) {
+        	log.error("Exiting on null request for {}", subjectId);
             return com.genkey.fingerprint.model.VerifyResponse.builder()
                     .verified(false)
                     .subjectId(subjectId)
@@ -262,6 +264,7 @@ public class AbisService {
             boolean subjectExists = abisService.existsSubject(subjectId);
                     
             if (!subjectExists) {
+            	log.error("Exiting verify on subject not exists for {}", subjectId);
                 return com.genkey.fingerprint.model.VerifyResponse.builder()
                         .verified(false)
                         .subjectId(subjectId)
@@ -318,6 +321,7 @@ public class AbisService {
         long startTime = System.currentTimeMillis();
         
         if (!initialized) {
+        	log.error("Exiting on system not initialized");
             return IdentifyResponse.builder()
                     .found(false)
                     .statusCode(-1)
@@ -326,6 +330,7 @@ public class AbisService {
         }
         
         if (CaptureUtils.isNullRequest(request)) {
+        	log.error("Exoting on null request");
             return IdentifyResponse.builder()
                     .found(false)
                     .statusCode(400)
@@ -341,8 +346,8 @@ public class AbisService {
             container.addBiometricRequest(request);
             
             // Perform identification (1:N search) using querySubject
+            log.info("Sending query request");
             MatchEngineResponse response = abisService.querySubject(container.getEnrolmentReference());
-            
             List<MatchResultInfo> candidates = new ArrayList<>();
             if (response.hasMatchResults()) {
                 List<MatchResult> matchResults = response.getMatchResults();
