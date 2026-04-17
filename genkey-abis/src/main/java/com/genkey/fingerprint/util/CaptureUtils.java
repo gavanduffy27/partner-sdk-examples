@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.genkey.abisclient.ImageBlob;
 import com.genkey.abisclient.ImageContext;
 import com.genkey.abisclient.ImageData;
+import com.genkey.abisclient.service.params.EnquireStatus;
 import com.genkey.abisclient.transport.FingerEnrollmentReference;
 import com.genkey.fingerprint.model.BiometricRequest;
 import com.genkey.fingerprint.model.CaptureResult;
@@ -20,13 +21,17 @@ import com.genkey.fingerprint.model.MultipleFingerCaptureResult;
 import com.genkey.fingerprint.model.FingerprintData;
 import com.genkey.platform.utils.CollectionUtils;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class CaptureUtils {
 
 	public static final String FORMAT_RAW = "RAW";
 	public static final String FORMAT_BMP = "BMP";
 	public static final String FORMAT_WSQ = "WSQ";
 	public static final String FORMAT_JPEG = "JPG";
-
+	public static final String FORMAT_CAPTURE_DEFAULT=FORMAT_RAW;
+	
 	public static boolean imageRotation;
 
 	public static boolean isImageRotation() {
@@ -48,9 +53,17 @@ public class CaptureUtils {
 		}
 		return result;
 	}
+	
+	public static void checkImageData(FingerprintData fpData) {
+		if ( isNullString(fpData.getImageFormat())) {
+			log.warn("Setting null format to {}", CaptureUtils.FORMAT_CAPTURE_DEFAULT);
+			fpData.setImageFormat(FORMAT_CAPTURE_DEFAULT);
+		}		
+	}
 
 	public static ImageData asImageData(FingerprintData fpData) {
 		ImageData result;
+		checkImageData(fpData);
 		if (fpData.getImageFormat().equals(CaptureUtils.FORMAT_RAW)) {
 			result = new ImageData(fpData.getWidth(), fpData.getHeight(), fpData.getImageData(),
 					fpData.getResolution());
@@ -135,6 +148,13 @@ public class CaptureUtils {
 		return null;
 	}
 
+	public static EnquireStatus getEnquireStatus(BiometricRequest request) {
+		EnquireStatus result = new EnquireStatus();
+		result.setFacePresent(! isNullArray( request.getFaceImage()));
+		result.setAfisPresent(! isNullContainer(request.getFingerprints()));
+		return result;
+	}
+	
 	public static boolean isNullRequest(BiometricRequest request) {
 		return isNullArray(request.getFaceImage()) && isNullContainer(request.getFingerprints());
 	}
@@ -157,7 +177,12 @@ public class CaptureUtils {
 
 	public static void checkImageData(CaptureResult captureResult) {
 		if (isNullArray(captureResult.getImageData()) && !isNullString(captureResult.getTemplateBase64())) {
+			log.warn("Setting missing image-data from base64 encoding");
 			captureResult.setImageData(Base64.getDecoder().decode(captureResult.getTemplateBase64()));
+		}
+		if (isNullString( captureResult.getImageFormat())) {
+			log.warn("Setting null image format to default {}", FORMAT_CAPTURE_DEFAULT);
+			captureResult.setImageFormat(FORMAT_CAPTURE_DEFAULT);
 		}
 	}
 
@@ -200,10 +225,6 @@ public class CaptureUtils {
 		List<FingerprintData> fingerprints = CaptureUtils.asFingerprints(images, fingers, FORMAT_BMP);
 		request.setFingerprints(fingerprints);
 		return true;
-	}
-
-	public static void importFaceUpload(BiometricRequest request, MultipartFile face) throws IOException {
-
 	}
 
 }

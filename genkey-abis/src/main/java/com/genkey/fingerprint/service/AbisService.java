@@ -8,6 +8,7 @@ import com.genkey.abisclient.service.GenkeyABISService;
 import com.genkey.abisclient.service.MatchEngineResponse;
 import com.genkey.abisclient.service.RestServices;
 import com.genkey.abisclient.service.VerifyResponse;
+import com.genkey.abisclient.service.params.EnquireStatus;
 import com.genkey.fingerprint.config.AbisConfig;
 import com.genkey.fingerprint.controller.EnrollmentDataContainer;
 import com.genkey.fingerprint.model.*;
@@ -274,7 +275,7 @@ public class AbisService {
                         .build();
             }
             
-            
+            EnquireStatus enquire = abisService.enquireSubject(subjectId);
 
             EnrollmentDataContainer container = new EnrollmentDataContainer(subjectId);
             container.addBiometricRequest(request);
