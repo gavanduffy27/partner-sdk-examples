@@ -8,9 +8,13 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.awt.GraphicsEnvironment;
 import java.io.File;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * Integrated Biometrics Scanner Implementation.
@@ -42,6 +46,7 @@ public class IntegratedBiometricsScanner implements FingerprintScanner {
     private ClassLoader sdkClassLoader;
     private Object[] lastSplitImages; // Store split images from last capture
     private Object[] lastSegmentPositions; // Store segment positions for cropping
+    private Object lastFullImageData; // Store full unsegmented ImageData from last capture
     
     public IntegratedBiometricsScanner(ScannerConfig config) {
         this.config = config;
@@ -278,6 +283,9 @@ public class IntegratedBiometricsScanner implements FingerprintScanner {
                                 if (name.equals("deviceImageResultExtendedAvailable") && args.length > 5) {
                                     splitImages = (Object[]) args[5]; // ImageData[] is at index 5 for extended callback
                                     imageArg = args[2]; // ImageData is at index 2 for extended callback
+                                    // Store the full unsegmented ImageData for ABIS SDK segmentation
+                                    lastFullImageData = args[2];
+                                    log.info("Stored full unsegmented ImageData for ABIS SDK segmentation");
                                     // Store segment positions for cropping
                                     if (args.length > 6) {
                                         lastSegmentPositions = (Object[]) args[6]; // SegmentPosition[] is at index 6
@@ -286,8 +294,12 @@ public class IntegratedBiometricsScanner implements FingerprintScanner {
                                 } else if (args.length > 3) {
                                     splitImages = (Object[]) args[3]; // ImageData[] is at index 3 for regular callback
                                     imageArg = args[1]; // ImageData is at index 1 for regular callback
+                                    // Store the full unsegmented ImageData for ABIS SDK segmentation
+                                    lastFullImageData = args[1];
+                                    log.info("Stored full unsegmented ImageData for ABIS SDK segmentation");
                                 } else {
                                     imageArg = args[1]; // Fallback to full image
+                                    lastFullImageData = args[1];
                                 }
                                 
                                 // If split images are available and this is a multiple finger capture, use the first split image
@@ -758,7 +770,31 @@ public class IntegratedBiometricsScanner implements FingerprintScanner {
             // Capture using the existing single finger method with multiple finger flag
             CaptureResult singleResult = capture(primaryFinger, timeout, true);
             
-            // Convert all split images to BMP format for ABIS WSQ conversion
+            // Extract the full unsegmented image for ABIS SDK to segment
+            // ABIS SDK's ImageContext expects a single full multi-finger image and will do the segmentation itself
+            byte[] fullRawImageData = null;
+            int fullWidth = singleResult.getWidth();
+            int fullHeight = singleResult.getHeight();
+            try {
+                // Use the stored full ImageData object from the callback
+                if (lastFullImageData != null && lastFullImageData.getClass().getName().contains("ImageData")) {
+                    fullRawImageData = extractRawImageData(lastFullImageData);
+                    // Get dimensions from the full ImageData object
+                    java.lang.reflect.Field widthField = lastFullImageData.getClass().getField("width");
+                    java.lang.reflect.Field heightField = lastFullImageData.getClass().getField("height");
+                    fullWidth = widthField.getInt(lastFullImageData);
+                    fullHeight = heightField.getInt(lastFullImageData);
+                    log.info("Extracted full unsegmented image for ABIS SDK: {}x{}, size={} bytes", fullWidth, fullHeight, fullRawImageData != null ? fullRawImageData.length : 0);
+                } else {
+                    log.warn("No full ImageData stored, falling back to single result image data");
+                    // Fallback to the BMP data from single result (this won't work for ABIS SDK segmentation)
+                    fullRawImageData = singleResult.getImageData();
+                }
+            } catch (Exception e) {
+                log.error("Failed to extract full raw image data: {}", e.getMessage());
+            }
+
+            // Keep split images for preview broadcast only (not for ABIS SDK segmentation)
             byte[][] fingerImages = null;
             if (lastSplitImages != null && lastSplitImages.length > 0) {
                 fingerImages = new byte[lastSplitImages.length][];
@@ -766,39 +802,25 @@ public class IntegratedBiometricsScanner implements FingerprintScanner {
                     try {
                         Object imageData = lastSplitImages[i];
                         if (imageData != null && imageData.getClass().getName().contains("ImageData")) {
-                            // Get segment position for this finger if available
+                            // Extract BMP for preview only
                             Object segmentPosition = null;
                             if (lastSegmentPositions != null && i < lastSegmentPositions.length) {
                                 segmentPosition = lastSegmentPositions[i];
                             }
-                            
-                            // Log dimensions of each split image to verify they are different
-                            try {
-                                java.lang.reflect.Method toImageMethod = imageData.getClass().getMethod("toImage");
-                                java.awt.image.BufferedImage bufferedImage = (java.awt.image.BufferedImage) toImageMethod.invoke(imageData);
-                                if (bufferedImage != null) {
-                                    log.info("Split image {} dimensions: {}x{}", i, bufferedImage.getWidth(), bufferedImage.getHeight());
-                                }
-                            } catch (Exception e) {
-                                log.error("Failed to get dimensions for split image {}: {}", i, e.getMessage());
-                            }
-                            
-                            // Extract BMP image data for ABIS to convert to WSQ, with cropping if segment position available
                             byte[] bmpData = extractBmpImageData(imageData, segmentPosition);
                             fingerImages[i] = bmpData;
-                            log.info("Converted split image {} to BMP format, size={} bytes", i, bmpData != null ? bmpData.length : 0);
                         }
                     } catch (Exception e) {
-                        log.error("Error converting split image {}: {}", i, e.getMessage());
+                        log.error("Error extracting BMP for preview split image {}: {}", i, e.getMessage());
                         fingerImages[i] = null;
                     }
                 }
             }
-            
+
             // Convert to MultipleFingerCaptureResult
-            // Use the first split image's BMP data as the main imageData to ensure format consistency
-            byte[] mainImageData = (fingerImages != null && fingerImages.length > 0 && fingerImages[0] != null) 
-                    ? fingerImages[0] 
+            // Use the full unsegmented RAW image for ABIS SDK segmentation
+            byte[] mainImageData = (fullRawImageData != null)
+                    ? fullRawImageData
                     : singleResult.getImageData();
             
             MultipleFingerCaptureResult result = MultipleFingerCaptureResult.multiBuilder()
@@ -807,10 +829,10 @@ public class IntegratedBiometricsScanner implements FingerprintScanner {
                     .statusMessage(singleResult.getStatusMessage())
                     .fingers(fingers)
                     .imageData(mainImageData)
-                    .imageFormat("BMP") // Use BMP format for ABIS to convert to WSQ
+                    .imageFormat("RAW") // Use RAW format for ABIS SDK segmentation
                     .quality(singleResult.getQuality())
-                    .width(singleResult.getWidth())
-                    .height(singleResult.getHeight())
+                    .width(fullWidth) // Use full image dimensions
+                    .height(fullHeight) // Use full image dimensions
                     .resolution(singleResult.getResolution())
                     .captureTimeMs(System.currentTimeMillis() - startTime)
                     .build();
@@ -903,6 +925,55 @@ public class IntegratedBiometricsScanner implements FingerprintScanner {
     }
     
     /**
+     * Extract raw buffer data from ImageData object for ABIS SDK segmentation
+     * ABIS SDK ImageContext expects raw grayscale pixel data, not BMP
+     */
+    private byte[] extractRawImageData(Object imageData) throws Exception {
+        try {
+            // Try to get raw buffer data directly from ImageData object
+            java.lang.reflect.Field bufferField = imageData.getClass().getField("buffer");
+            byte[] buffer = (byte[]) bufferField.get(imageData);
+            
+            java.lang.reflect.Field widthField = imageData.getClass().getField("width");
+            int width = widthField.getInt(imageData);
+            
+            java.lang.reflect.Field heightField = imageData.getClass().getField("height");
+            int height = heightField.getInt(imageData);
+            
+            log.info("Extracted raw buffer data: {}x{}, size={} bytes", width, height, buffer != null ? buffer.length : 0);
+            return buffer;
+        } catch (NoSuchFieldException e) {
+            // Fallback: extract from BufferedImage
+            log.warn("Could not find buffer field, extracting from BufferedImage");
+            java.lang.reflect.Method toImageMethod = imageData.getClass().getMethod("toImage");
+            java.awt.image.BufferedImage bufferedImage = (java.awt.image.BufferedImage) toImageMethod.invoke(imageData);
+            
+            if (bufferedImage != null) {
+                int width = bufferedImage.getWidth();
+                int height = bufferedImage.getHeight();
+                
+                // Extract raw grayscale pixel data
+                byte[] buffer = new byte[width * height];
+                int index = 0;
+                for (int y = 0; y < height; y++) {
+                    for (int x = 0; x < width; x++) {
+                        int rgb = bufferedImage.getRGB(x, y);
+                        // Extract grayscale value (using green channel for simplicity)
+                        buffer[index++] = (byte) ((rgb >> 8) & 0xFF);
+                    }
+                }
+                
+                log.info("Extracted raw data from BufferedImage: {}x{}, size={} bytes", width, height, buffer.length);
+                return buffer;
+            }
+        } catch (Exception e) {
+            log.error("Failed to extract raw image data: {}", e.getMessage());
+            throw e;
+        }
+        return null;
+    }
+    
+    /**
      * Extract BMP image data from ImageData object for preview broadcast
      * Returns BMP data directly to avoid dimension mismatch issues
      */
@@ -922,104 +993,104 @@ public class IntegratedBiometricsScanner implements FingerprintScanner {
                 int width = bufferedImage.getWidth();
                 int height = bufferedImage.getHeight();
                 
-                // If segment position is provided, crop the image to the finger region
-                if (segmentPosition != null) {
-                    try {
-                        // Log all available fields in SegmentPosition to understand its structure
-                        java.lang.reflect.Field[] fields = segmentPosition.getClass().getDeclaredFields();
-                        log.info("SegmentPosition fields: {}", java.util.Arrays.toString(fields));
+                // // If segment position is provided, crop the image to the finger region
+                // if (segmentPosition != null) {
+                //     try {
+                //         // Log all available fields in SegmentPosition to understand its structure
+                //         java.lang.reflect.Field[] fields = segmentPosition.getClass().getDeclaredFields();
+                //         log.info("SegmentPosition fields: {}", java.util.Arrays.toString(fields));
                         
-                        for (java.lang.reflect.Field field : fields) {
-                            field.setAccessible(true);
-                            try {
-                                Object value = field.get(segmentPosition);
-                                log.info("  Field: {} = {} (type: {})", field.getName(), value, field.getType().getSimpleName());
-                            } catch (Exception e) {
-                                log.error("  Failed to read field {}: {}", field.getName(), e.getMessage());
-                            }
-                        }
+                //         for (java.lang.reflect.Field field : fields) {
+                //             field.setAccessible(true);
+                //             try {
+                //                 Object value = field.get(segmentPosition);
+                //                 log.info("  Field: {} = {} (type: {})", field.getName(), value, field.getType().getSimpleName());
+                //             } catch (Exception e) {
+                //                 log.error("  Failed to read field {}: {}", field.getName(), e.getMessage());
+                //             }
+                //         }
                         
-                        // Try common field names for segment position
-                        int x = 0, y = 0, segWidth = width, segHeight = height;
-                        boolean foundFields = false;
+                //         // Try common field names for segment position
+                //         int x = 0, y = 0, segWidth = width, segHeight = height;
+                //         boolean foundFields = false;
                         
-                        // Try various possible field names
-                        String[] xFieldNames = {"x", "X", "left", "Left", "offsetX", "OffsetX"};
-                        String[] yFieldNames = {"y", "Y", "top", "Top", "offsetY", "OffsetY"};
-                        String[] widthFieldNames = {"width", "Width", "w", "W"};
-                        String[] heightFieldNames = {"height", "Height", "h", "H"};
+                //         // Try various possible field names
+                //         String[] xFieldNames = {"x", "X", "left", "Left", "offsetX", "OffsetX"};
+                //         String[] yFieldNames = {"y", "Y", "top", "Top", "offsetY", "OffsetY"};
+                //         String[] widthFieldNames = {"width", "Width", "w", "W"};
+                //         String[] heightFieldNames = {"height", "Height", "h", "H"};
                         
-                        for (String fieldName : xFieldNames) {
-                            try {
-                                java.lang.reflect.Field field = segmentPosition.getClass().getField(fieldName);
-                                x = field.getInt(segmentPosition);
-                                log.info("Found x field: {} = {}", fieldName, x);
-                                foundFields = true;
-                                break;
-                            } catch (NoSuchFieldException e) {
-                                // Continue to next field name
-                            }
-                        }
+                //         for (String fieldName : xFieldNames) {
+                //             try {
+                //                 java.lang.reflect.Field field = segmentPosition.getClass().getField(fieldName);
+                //                 x = field.getInt(segmentPosition);
+                //                 log.info("Found x field: {} = {}", fieldName, x);
+                //                 foundFields = true;
+                //                 break;
+                //             } catch (NoSuchFieldException e) {
+                //                 // Continue to next field name
+                //             }
+                //         }
                         
-                        for (String fieldName : yFieldNames) {
-                            try {
-                                java.lang.reflect.Field field = segmentPosition.getClass().getField(fieldName);
-                                y = field.getInt(segmentPosition);
-                                log.info("Found y field: {} = {}", fieldName, y);
-                                foundFields = true;
-                                break;
-                            } catch (NoSuchFieldException e) {
-                                // Continue to next field name
-                            }
-                        }
+                //         for (String fieldName : yFieldNames) {
+                //             try {
+                //                 java.lang.reflect.Field field = segmentPosition.getClass().getField(fieldName);
+                //                 y = field.getInt(segmentPosition);
+                //                 log.info("Found y field: {} = {}", fieldName, y);
+                //                 foundFields = true;
+                //                 break;
+                //             } catch (NoSuchFieldException e) {
+                //                 // Continue to next field name
+                //             }
+                //         }
                         
-                        for (String fieldName : widthFieldNames) {
-                            try {
-                                java.lang.reflect.Field field = segmentPosition.getClass().getField(fieldName);
-                                segWidth = field.getInt(segmentPosition);
-                                log.info("Found width field: {} = {}", fieldName, segWidth);
-                                foundFields = true;
-                                break;
-                            } catch (NoSuchFieldException e) {
-                                // Continue to next field name
-                            }
-                        }
+                //         for (String fieldName : widthFieldNames) {
+                //             try {
+                //                 java.lang.reflect.Field field = segmentPosition.getClass().getField(fieldName);
+                //                 segWidth = field.getInt(segmentPosition);
+                //                 log.info("Found width field: {} = {}", fieldName, segWidth);
+                //                 foundFields = true;
+                //                 break;
+                //             } catch (NoSuchFieldException e) {
+                //                 // Continue to next field name
+                //             }
+                //         }
                         
-                        for (String fieldName : heightFieldNames) {
-                            try {
-                                java.lang.reflect.Field field = segmentPosition.getClass().getField(fieldName);
-                                segHeight = field.getInt(segmentPosition);
-                                log.info("Found height field: {} = {}", fieldName, segHeight);
-                                foundFields = true;
-                                break;
-                            } catch (NoSuchFieldException e) {
-                                // Continue to next field name
-                            }
-                        }
+                //         for (String fieldName : heightFieldNames) {
+                //             try {
+                //                 java.lang.reflect.Field field = segmentPosition.getClass().getField(fieldName);
+                //                 segHeight = field.getInt(segmentPosition);
+                //                 log.info("Found height field: {} = {}", fieldName, segHeight);
+                //                 foundFields = true;
+                //                 break;
+                //             } catch (NoSuchFieldException e) {
+                //                 // Continue to next field name
+                //             }
+                //         }
                         
-                        if (foundFields) {
-                            log.info("Cropping image using segment position: x={}, y={}, width={}, height={}, original={}x{}", 
-                                    x, y, segWidth, segHeight, width, height);
+                //         if (foundFields) {
+                //             log.info("Cropping image using segment position: x={}, y={}, width={}, height={}, original={}x{}", 
+                //                     x, y, segWidth, segHeight, width, height);
                             
-                            // Validate crop coordinates
-                            if (x >= 0 && y >= 0 && segWidth > 0 && segHeight > 0 && 
-                                x + segWidth <= width && y + segHeight <= height) {
-                                bufferedImage = bufferedImage.getSubimage(x, y, segWidth, segHeight);
-                                width = segWidth;
-                                height = segHeight;
-                                log.info("Successfully cropped image to {}x{}", width, height);
-                            } else {
-                                log.warn("Invalid crop coordinates, using original image: x={}, y={}, width={}, height={}, original={}x{}", 
-                                        x, y, segWidth, segHeight, width, height);
-                            }
-                        } else {
-                            log.warn("Could not find segment position fields, using original image");
-                        }
-                    } catch (Exception e) {
-                        log.error("Failed to apply segment position for cropping: {}", e.getMessage(), e);
-                        // Continue with original image
-                    }
-                }
+                //             // Validate crop coordinates
+                //             if (x >= 0 && y >= 0 && segWidth > 0 && segHeight > 0 && 
+                //                 x + segWidth <= width && y + segHeight <= height) {
+                //                 bufferedImage = bufferedImage.getSubimage(x, y, segWidth, segHeight);
+                //                 width = segWidth;
+                //                 height = segHeight;
+                //                 log.info("Successfully cropped image to {}x{}", width, height);
+                //             } else {
+                //                 log.warn("Invalid crop coordinates, using original image: x={}, y={}, width={}, height={}, original={}x{}", 
+                //                         x, y, segWidth, segHeight, width, height);
+                //             }
+                //         } else {
+                //             log.warn("Could not find segment position fields, using original image");
+                //         }
+                //     } catch (Exception e) {
+                //         log.error("Failed to apply segment position for cropping: {}", e.getMessage(), e);
+                //         // Continue with original image
+                //     }
+                // }
                 
                 // Convert to BMP format
                 java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" debug="true">
+    <jmxConfigurator />
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>./logs/partner-examples.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>./logs/application.%d{yyyy-MM-dd}.log</fileNamePattern>    
+            <maxHistory>3</maxHistory> 
+        </rollingPolicy>
+
+        <encoder>
+            <pattern>%d{yyyy-MM-dd}|%d{HH:mm:ss.SSS} [%thread] %-5level {%logger{0}.%line} - ::%X{context}:: %msg%n</pattern>
+        </encoder>
+    </appender>
+     
+     <appender name="ENV_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>./logs/environment.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>./logs/environment.%d{yyyy-MM-dd}.log</fileNamePattern>     
+            <maxHistory>3</maxHistory> 
+        </rollingPolicy>
+
+        <encoder>
+            <pattern>%d{yyyy-MM-dd}|%d{HH:mm:ss.SSS} [%thread] %-5level {%logger{0}.%line} - %msg%n</pattern>
+        </encoder>
+    </appender>
+    
+     <appender name="ROOT_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>./logs/environment.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>./logs/rootLog.%d{yyyy-MM-dd}.log</fileNamePattern>     
+            <maxHistory>3</maxHistory> 
+        </rollingPolicy>
+
+        <encoder>
+			<pattern>[%thread] %-5level {%logger{0}.%line} - ::%X{context}:: %msg%n</pattern>        
+        </encoder>
+    </appender>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">     
+         <encoder>
+            <pattern>[%thread] %-5level {%logger{0}.%line} - ::%X{context}:: %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="com.genkey" level="INFO" additivity="false">
+        <appender-ref ref="FILE" />
+    </logger>
+
+    <logger name="com.genkey.partner" level="INFO" additivity="false">
+        <appender-ref ref="FILE" />
+    </logger>
+
+	<logger name="com.genkey.platform.rest" level="DEBUG" additivity="false">
+        <appender-ref ref="FILE" />
+    </logger>
+	
+    
+    <logger name="org.springframework" level="INFO" additivity="false">
+        <appender-ref ref="ENV_FILE" />
+    </logger>
+
+    <root>
+        <level value="INFO" />
+        <appender-ref ref="ROOT_FILE" />
+    </root>
+</configuration> 

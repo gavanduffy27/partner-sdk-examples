@@ -32,7 +32,7 @@ public class CaptureUtils {
 	public static final String FORMAT_JPEG = "JPG";
 	public static final String FORMAT_CAPTURE_DEFAULT=FORMAT_RAW;
 	
-	public static boolean imageRotation;
+	public static boolean imageRotation = true;
 
 	public static boolean isImageRotation() {
 		return imageRotation;
