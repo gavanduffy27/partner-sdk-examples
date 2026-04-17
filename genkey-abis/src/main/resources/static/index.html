@@ -596,7 +596,23 @@
                             <div class="finger-btn" data-finger="9" onclick="toggleSelection(this, 'fpEnroll')">L.R</div>
                             <div class="finger-btn" data-finger="10" onclick="toggleSelection(this, 'fpEnroll')">L.L</div>
                         </div>
-                        <button class="btn btn-success" style="width: 100%; margin-top:10px;" onclick="captureAndEnroll()">Capture & Enroll</button>
+                        
+                        <!-- Two-step enrollment buttons -->
+                        <div style="display: flex; gap: 10px; margin-top: 10px;">
+                            <button class="btn btn-primary" style="flex: 1;" onclick="captureForEnrollment()">1. Capture Fingers</button>
+                            <button class="btn btn-success" style="flex: 1;" onclick="enrollCapturedFingers()">2. Enroll</button>
+                        </div>
+                        
+                        <!-- Pending status -->
+                        <div id="pendingEnrollmentStatus" style="margin-top: 10px; padding: 10px; background: #1a1a2e; border-radius: 6px; display: none;">
+                            <div style="color: #4fc3f7; font-size: 0.85rem; margin-bottom: 5px;">Pending Enrollment:</div>
+                            <div id="pendingFingerCount" style="color: #aaa; font-size: 0.8rem;"></div>
+                        </div>
+                        
+                        <!-- Legacy button for backward compatibility -->
+                        <div style="margin-top: 15px; border-top: 1px solid #3a3a5a; padding-top: 10px;">
+                            <button class="btn btn-warning" style="width: 100%; font-size: 0.85rem;" onclick="captureAndEnroll()">Legacy: Capture & Enroll (One-Step)</button>
+                        </div>
                     </div>
                     
                     <!-- Verification Card -->
@@ -633,6 +649,14 @@
                         <div class="finger-grid" id="fpIdentifyFingers">
                             <div class="finger-btn" data-finger="1" onclick="toggleSelection(this, 'fpIdentify')">R.T</div>
                             <div class="finger-btn" data-finger="2" onclick="toggleSelection(this, 'fpIdentify')">R.I</div>
+                            <div class="finger-btn" data-finger="3" onclick="toggleSelection(this, 'fpIdentify')">R.M</div>
+                            <div class="finger-btn" data-finger="4" onclick="toggleSelection(this, 'fpIdentify')">R.R</div>
+                            <div class="finger-btn" data-finger="5" onclick="toggleSelection(this, 'fpIdentify')">R.L</div>
+                            <div class="finger-btn" data-finger="6" onclick="toggleSelection(this, 'fpIdentify')">L.T</div>
+                            <div class="finger-btn" data-finger="7" onclick="toggleSelection(this, 'fpIdentify')">L.I</div>
+                            <div class="finger-btn" data-finger="8" onclick="toggleSelection(this, 'fpIdentify')">L.M</div>
+                            <div class="finger-btn" data-finger="9" onclick="toggleSelection(this, 'fpIdentify')">L.R</div>
+                            <div class="finger-btn" data-finger="10" onclick="toggleSelection(this, 'fpIdentify')">L.L</div>
                         </div>
                         <button class="btn btn-primary" style="width: 100%;" onclick="captureAndIdentify()">Capture & Identify</button>
                     </div>
@@ -713,6 +737,14 @@
                         <div class="finger-grid" id="multiEnrollFingers">
                             <div class="finger-btn" data-finger="1" onclick="toggleSelection(this, 'multiEnroll')">R.T</div>
                             <div class="finger-btn" data-finger="2" onclick="toggleSelection(this, 'multiEnroll')">R.I</div>
+                            <div class="finger-btn" data-finger="3" onclick="toggleSelection(this, 'multiEnroll')">R.M</div>
+                            <div class="finger-btn" data-finger="4" onclick="toggleSelection(this, 'multiEnroll')">R.R</div>
+                            <div class="finger-btn" data-finger="5" onclick="toggleSelection(this, 'multiEnroll')">R.L</div>
+                            <div class="finger-btn" data-finger="6" onclick="toggleSelection(this, 'multiEnroll')">L.T</div>
+                            <div class="finger-btn" data-finger="7" onclick="toggleSelection(this, 'multiEnroll')">L.I</div>
+                            <div class="finger-btn" data-finger="8" onclick="toggleSelection(this, 'multiEnroll')">L.M</div>
+                            <div class="finger-btn" data-finger="9" onclick="toggleSelection(this, 'multiEnroll')">L.R</div>
+                            <div class="finger-btn" data-finger="10" onclick="toggleSelection(this, 'multiEnroll')">L.L</div>
                         </div>
                         <div class="face-section">
                             <label style="color: #aaa; font-size: 0.9rem;">Upload Face Portrait</label>
@@ -734,6 +766,15 @@
                         <p class="finger-label">Select verification finger:</p>
                         <div class="finger-grid" id="multiVerifyFingers">
                             <div class="finger-btn" data-finger="1" onclick="toggleSelection(this, 'multiVerify')">R.T</div>
+                            <div class="finger-btn" data-finger="2" onclick="toggleSelection(this, 'multiVerify')">R.I</div>
+                            <div class="finger-btn" data-finger="3" onclick="toggleSelection(this, 'multiVerify')">R.M</div>
+                            <div class="finger-btn" data-finger="4" onclick="toggleSelection(this, 'multiVerify')">R.R</div>
+                            <div class="finger-btn" data-finger="5" onclick="toggleSelection(this, 'multiVerify')">R.L</div>
+                            <div class="finger-btn" data-finger="6" onclick="toggleSelection(this, 'multiVerify')">L.T</div>
+                            <div class="finger-btn" data-finger="7" onclick="toggleSelection(this, 'multiVerify')">L.I</div>
+                            <div class="finger-btn" data-finger="8" onclick="toggleSelection(this, 'multiVerify')">L.M</div>
+                            <div class="finger-btn" data-finger="9" onclick="toggleSelection(this, 'multiVerify')">L.R</div>
+                            <div class="finger-btn" data-finger="10" onclick="toggleSelection(this, 'multiVerify')">L.L</div>
                         </div>
                         <div class="face-section">
                             <label style="color: #aaa; font-size: 0.9rem;">Upload Face Portrait</label>
@@ -1501,6 +1542,73 @@
                 method: 'POST',
                 body: JSON.stringify(fingers)
             });
+        }
+
+        // Two-step enrollment functions
+        async function captureForEnrollment() {
+            const subjectId = document.getElementById('fpEnrollSubjectId').value;
+            const fingers = selectedGroups.fpEnroll;
+
+            if (!subjectId) {
+                alert('Subject ID is required for enrollment');
+                return;
+            }
+            if (!fingers || fingers.length === 0) {
+                alert('Select at least one finger to enroll');
+                return;
+            }
+
+            const response = await apiCall('/enroll/capture-only?subjectId=' + encodeURIComponent(subjectId), {
+                method: 'POST',
+                body: JSON.stringify(fingers)
+            });
+
+            if (response) {
+                // Check pending enrollment status
+                await checkPendingEnrollment(subjectId);
+            }
+        }
+
+        async function enrollCapturedFingers() {
+            const subjectId = document.getElementById('fpEnrollSubjectId').value;
+            const firstName = document.getElementById('fpEnrollFirstName').value;
+            const lastName = document.getElementById('fpEnrollLastName').value;
+
+            if (!subjectId) {
+                alert('Subject ID is required for enrollment');
+                return;
+            }
+
+            const queryParams = [];
+            queryParams.push('subjectId=' + encodeURIComponent(subjectId));
+            if (firstName) queryParams.push('firstName=' + encodeURIComponent(firstName));
+            if (lastName) queryParams.push('lastName=' + encodeURIComponent(lastName));
+
+            const response = await apiCall('/enroll/confirm?' + queryParams.join('&'), {
+                method: 'POST'
+            });
+
+            if (response && response.success) {
+                // Clear pending status
+                document.getElementById('pendingEnrollmentStatus').style.display = 'none';
+            }
+        }
+
+        async function checkPendingEnrollment(subjectId) {
+            if (!subjectId) return;
+
+            const response = await apiCall(`/enroll/pending/${encodeURIComponent(subjectId)}`);
+            if (response) {
+                const statusDiv = document.getElementById('pendingEnrollmentStatus');
+                const countDiv = document.getElementById('pendingFingerCount');
+                
+                if (response.hasPending) {
+                    statusDiv.style.display = 'block';
+                    countDiv.textContent = `${response.fingerCount} fingerprints captured and ready for enrollment`;
+                } else {
+                    statusDiv.style.display = 'none';
+                }
+            }
         }
 
         async function captureAndVerify() {
