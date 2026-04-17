@@ -2,6 +2,9 @@ package com.genkey.fingerprint.model;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Builder;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 
 /**
  * We may want to extend this to include an array or collection of quality scores if
@@ -11,14 +14,12 @@ import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode(callSuper=false)
+@AllArgsConstructor
+@NoArgsConstructor
 public class MultipleFingerCaptureResult extends CaptureResult{
 
 	private int [] fingers;
 
-	public MultipleFingerCaptureResult() {
-		
-	}
-	
 	public MultipleFingerCaptureResult(CaptureResult captureResult, int [] fingers) {
 		CaptureResult.copyTo(captureResult, this);
 		this.setFinger(0);
@@ -129,5 +130,4 @@ public class MultipleFingerCaptureResult extends CaptureResult{
 			return result;
 		}
 	}
-	
 }

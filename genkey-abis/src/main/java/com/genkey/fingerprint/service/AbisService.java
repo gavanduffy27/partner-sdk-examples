@@ -262,8 +262,8 @@ public class AbisService {
                 return com.genkey.fingerprint.model.VerifyResponse.builder()
                         .verified(false)
                         .subjectId(subjectId)
-                        .statusCode(404)
-                        .statusMessage("Subject not found")
+                        .statusCode(400)
+                        .statusMessage("Verification failed: No fingerprint or face data provided")
                         .processingTimeMs(System.currentTimeMillis() - startTime)
                         .build();
             }

@@ -21,7 +21,7 @@ abis:
     legacy-host: 10.22.74.51
     dr-host: 10.22.74.51
   library:
-    path: C:\xampp\htdocs\AFIS\partner-sdk-examples\abisclient-dll
+    path: c:/Users/Rodb/Desktop/AFIS/6.2.2-SNAPSHOT/abisclient-dll
   capture:
     # Timeout for fingerprint capture in milliseconds
     timeout: 30000

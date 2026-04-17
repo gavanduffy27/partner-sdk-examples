@@ -813,7 +813,6 @@ public class IntegratedBiometricsScanner implements FingerprintScanner {
                     .height(singleResult.getHeight())
                     .resolution(singleResult.getResolution())
                     .captureTimeMs(System.currentTimeMillis() - startTime)
-//                    .fingerImages(fingerImages)
                     .build();
             
             // Broadcast capture success for each finger in multiple finger capture
