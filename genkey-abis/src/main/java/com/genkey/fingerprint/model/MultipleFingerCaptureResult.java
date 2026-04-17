@@ -1,6 +1,7 @@
 package com.genkey.fingerprint.model;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 /**
  * We may want to extend this to include an array or collection of quality scores if
@@ -9,6 +10,7 @@ import lombok.Data;
  */
 
 @Data
+@EqualsAndHashCode(callSuper=false)
 public class MultipleFingerCaptureResult extends CaptureResult{
 
 	private int [] fingers;

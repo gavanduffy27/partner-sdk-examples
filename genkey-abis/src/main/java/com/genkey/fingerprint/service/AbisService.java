@@ -1,18 +1,13 @@
 package com.genkey.fingerprint.service;
 
 import com.genkey.abisclient.ABISClientLibrary;
-import com.genkey.abisclient.ImageContext;
 import com.genkey.abisclient.ImageContextSDK;
-import com.genkey.abisclient.ImageData;
 import com.genkey.abisclient.matchengine.MatchResult;
 import com.genkey.abisclient.service.ABISServiceModule;
 import com.genkey.abisclient.service.GenkeyABISService;
 import com.genkey.abisclient.service.MatchEngineResponse;
 import com.genkey.abisclient.service.RestServices;
 import com.genkey.abisclient.service.VerifyResponse;
-import com.genkey.abisclient.transport.FingerEnrollmentReference;
-import com.genkey.abisclient.ImageBlob;
-import com.genkey.abisclient.transport.SubjectEnrollmentReference;
 import com.genkey.fingerprint.config.AbisConfig;
 import com.genkey.fingerprint.controller.EnrollmentDataContainer;
 import com.genkey.fingerprint.model.*;
