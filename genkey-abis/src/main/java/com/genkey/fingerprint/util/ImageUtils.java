@@ -13,7 +13,7 @@ import com.genkey.abisclient.ImageData;
 
 public class ImageUtils {
 
-	public static ImageData rotateImageData(ImageData imageData, double theta) {
+	public static ImageData rotateImageAffine(ImageData imageData, double theta) {
 		try {
 			BufferedImage image = asBufferedImage(imageData);
 			BufferedImage rotateImage = rotateImage(image, theta);
@@ -21,6 +21,27 @@ public class ImageUtils {
 		} catch (Exception e) {
 			throw new RuntimeException("Unhandled failure on image rotate", e);
 		}
+	}
+
+	public static ImageData rotateImage180(ImageData imageData) {
+		int wd = imageData.getWidth();
+		int ht = imageData.getHeight();
+		byte[] srcData = imageData.getPixelData();
+		byte[] newImage = new byte[imageData.getWidth() * imageData.getHeight()];
+		for (int row = 0; row < ht; row++) {
+			int tgtRow = ht - row - 1;
+			for (int col = 0; col < wd; col++) {
+				int tgtCol = wd - col - 1;
+				int srcIndex = getPixelIndex(row, col, wd, ht);
+				int tgtIndex = getPixelIndex(tgtRow, tgtCol, wd, ht);
+				newImage[tgtIndex] = srcData[srcIndex];
+			}
+		}
+		return new ImageData(wd, ht, newImage, imageData.getResolution());
+	}
+
+	public static int getPixelIndex(int row, int col, int wd, int ht) {
+		return row * wd + col;
 	}
 
 	public static BufferedImage asBufferedImage(ImageData imageData) throws IOException {
@@ -52,5 +73,5 @@ public class ImageUtils {
 		}
 		return result;
 	}
-	
+
 }
