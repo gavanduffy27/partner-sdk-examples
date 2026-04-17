@@ -1,7 +1,6 @@
 package com.genkey.fingerprint.scanner;
 
 import com.genkey.fingerprint.config.ScannerConfig;
-import com.genkey.fingerprint.model.CaptureResult;
 import com.genkey.fingerprint.model.MultipleFingerCaptureResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;

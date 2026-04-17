@@ -11,18 +11,26 @@ import lombok.NoArgsConstructor;
  * that information is provided by the scanner.
  * 
  */
+
 @Data
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode(callSuper=false)
 @AllArgsConstructor
 @NoArgsConstructor
 public class MultipleFingerCaptureResult extends CaptureResult{
 
 	private int [] fingers;
-	private byte[][] fingerImages; // Array of images, one per finger
+
+	public MultipleFingerCaptureResult(CaptureResult captureResult, int [] fingers) {
+		CaptureResult.copyTo(captureResult, this);
+		this.setFinger(0);
+		this.setFingers(fingers);
+		
+	}
 	
 	public static MultipleFingerCaptureResultBuilder multiBuilder() {
 		return new MultipleFingerCaptureResultBuilder();
 	}
+	
 	
 	public static class MultipleFingerCaptureResultBuilder {
 		private boolean success;
@@ -38,7 +46,6 @@ public class MultipleFingerCaptureResult extends CaptureResult{
 		private String templateBase64;
 		private long captureTimeMs;
 		private int[] fingers;
-		private byte[][] fingerImages;
 		
 		public MultipleFingerCaptureResultBuilder success(boolean success) {
 			this.success = success;
@@ -104,12 +111,7 @@ public class MultipleFingerCaptureResult extends CaptureResult{
 			this.fingers = fingers;
 			return this;
 		}
-		
-		public MultipleFingerCaptureResultBuilder fingerImages(byte[][] fingerImages) {
-			this.fingerImages = fingerImages;
-			return this;
-		}
-		
+				
 		public MultipleFingerCaptureResult build() {
 			MultipleFingerCaptureResult result = new MultipleFingerCaptureResult();
 			result.setSuccess(success);
@@ -125,7 +127,6 @@ public class MultipleFingerCaptureResult extends CaptureResult{
 			result.setTemplateBase64(templateBase64);
 			result.setCaptureTimeMs(captureTimeMs);
 			result.setFingers(fingers);
-			result.setFingerImages(fingerImages);
 			return result;
 		}
 	}

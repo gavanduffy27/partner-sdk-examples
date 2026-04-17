@@ -12,7 +12,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class VerifyRequest {
+public class VerifyRequest implements BiometricRequest{
     
     @NotBlank(message = "Subject ID is required")
     private String subjectId;

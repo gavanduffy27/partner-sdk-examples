@@ -8,13 +8,9 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.awt.GraphicsEnvironment;
 import java.io.File;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 /**
  * Integrated Biometrics Scanner Implementation.
@@ -817,7 +813,6 @@ public class IntegratedBiometricsScanner implements FingerprintScanner {
                     .height(singleResult.getHeight())
                     .resolution(singleResult.getResolution())
                     .captureTimeMs(System.currentTimeMillis() - startTime)
-                    .fingerImages(fingerImages)
                     .build();
             
             // Broadcast capture success for each finger in multiple finger capture
