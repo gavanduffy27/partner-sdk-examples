@@ -10,7 +10,10 @@ import com.genkey.abisclient.transport.FingerEnrollmentReference;
 import com.genkey.abisclient.transport.SubjectEnrollmentReference;
 import com.genkey.partner.example.PartnerExample;
 import com.genkey.partner.example.PartnerTestSuite;
+import com.genkey.partner.utils.ImageUtils;
 import com.genkey.platform.utils.FileUtils;
+
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -18,7 +21,7 @@ import java.nio.file.Files;
 public class SegmentationExample extends PartnerExample {
 
   // final static String TestImage="serge_image2";
-  static final String TestImage = "v1-left";
+  static final String TestImage = "full_capture_thumbs";
 
   static String argumentFile = null;
 
@@ -43,7 +46,8 @@ public class SegmentationExample extends PartnerExample {
   @Override
   protected void runAllExamples() {
     // testSegmentation();
-    testSegmentation2();
+//    testSegmentation2();
+    testRotation();
   }
 
   public void testSegmentation() {
@@ -99,16 +103,18 @@ public class SegmentationExample extends PartnerExample {
     if (argumentFile == null) {
       argumentFile = TestDataManager.getImageFile(TestImage);
     }
-    testSegmentation2(argumentFile, PartnerExample.LeftHand, true);
+    testSegmentation2(argumentFile, PartnerExample.Thumbs, true);
   }
+
+  public static String EXPORT_PATH = "test/exports/dgie/segmentation";
 
   public void testSegmentation2(String fileName, int[] fingers, boolean useDetected) {
     // String imageName = "kojak_image.bmp";
     ImageData imageData = null;
-    int [] detectedFingers;
+    int[] detectedFingers;
     String imageName = FileUtils.baseName(fileName);
     try {
-    	byte [] encoding = FileUtils.byteArrayFromFile(fileName);
+      byte[] encoding = FileUtils.byteArrayFromFile(fileName);
       imageData = new ImageData(encoding, "bmp");
     } catch (IOException e1) {
       e1.printStackTrace();
@@ -116,18 +122,26 @@ public class SegmentationExample extends PartnerExample {
     String format = ImageData.FORMAT_BMP;
 
     ImageContext context = new ImageContext(imageData, fingers);
+    int status = context.getStatus();
+    printResult("status", status);
+    if (context.isBlocked()) {
+      return;
+    }
     if (useDetected) {
-    	detectedFingers = context.getDetectedFingers();
-    	printResult("Detected", detectedFingers);
+      detectedFingers = context.getDetectedFingers();
+      printResult("Detected", detectedFingers);
     }
 
     int nFingers = context.count();
     SubjectEnrollmentReference subjectRef = new SubjectEnrollmentReference();
     subjectRef.setSubjectID("subject_" + imageName);
+
+    String exportFolder = FileUtils.expandConfigPath(EXPORT_PATH, imageName);
+
     for (int ix = 0; ix < nFingers; ix++) {
       int fingerId = fingers[ix];
-      String baseName = imageName + "_" + fingerId;
-      String testFile = "TEST_" + fingerId + ".BMP";
+      String baseName = "f_" + fingerId;
+      String testFile = FileUtils.expandConfigFile(exportFolder, baseName, format);
       ImageData segment = context.extractImageSegment(ix, true);
       ReferenceDataItem reference = context.getReferenceData(ix);
 
@@ -153,6 +167,33 @@ public class SegmentationExample extends PartnerExample {
       FileUtils.stringToFile(xmlContent, xmlFile);
     } catch (Exception e) {
       e.printStackTrace();
+    }
+  }
+
+  public void testRotation() {
+    if (argumentFile == null) {
+      argumentFile = TestDataManager.getImageFile(TestImage);
+    }
+    testRotation(argumentFile);
+  }
+
+  private void testRotation(String fileName) {
+    ImageData imageData = null;
+    String imageName = FileUtils.baseName(fileName);
+    try {
+      byte[] encoding = FileUtils.byteArrayFromFile(fileName);
+      imageData = new ImageData(encoding, ImageData.FORMAT_BMP);
+    } catch (IOException e1) {
+      e1.printStackTrace();
+    }
+    String baseName = imageName + "_rotate";
+    ImageData rotatedImage = ImageUtils.rotateImageData(imageData, Math.PI);
+    String exportFile = FileUtils.expandConfigFile(EXPORT_PATH, baseName, ImageData.FORMAT_BMP);
+    try {
+    	byte [] encoding = rotatedImage.asEncodedImage(ImageData.FORMAT_BMP);
+    	FileUtils.byteArrayToFile(encoding, exportFile);
+    } catch (Exception e) {
+    	e.printStackTrace();
     }
   }
 }
