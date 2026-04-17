@@ -1,6 +1,7 @@
 package com.genkey.fingerprint.util;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.HashMap;
@@ -25,7 +26,7 @@ public class CaptureUtils {
 	public static final String FORMAT_RAW = "RAW";
 	public static final String FORMAT_BMP = "BMP";
 	public static final String FORMAT_WSQ = "WSQ";
-	public static final String FORMAT_JPEG = "JPEG";
+	public static final String FORMAT_JPEG = "JPG";
 
 	
 	public static ImageData asImageData(CaptureResult captureResult) {
@@ -49,18 +50,18 @@ public class CaptureUtils {
 		return result;
 	}
 	
-	public static ImageData asImageData(MultipartFile file, int resolution) throws IOException {
+	public static ImageData asImageData(MultipartFile file, int resolution, String defaultFormat) throws IOException {
         String filename = file.getOriginalFilename();
         String format = filename != null && filename.contains(".") ? 
-                filename.substring(filename.lastIndexOf(".") + 1).toUpperCase() : FORMAT_BMP;
+                filename.substring(filename.lastIndexOf(".") + 1).toUpperCase() : defaultFormat;
         byte [] imageData = file.getBytes();
         return new ImageData(imageData, format, resolution);
 	}
 	
-	public static ImageBlob asImageBlob(MultipartFile file) throws IOException {
+	public static ImageBlob asImageBlob(MultipartFile file, String defaultFormat) throws IOException {
         String filename = file.getOriginalFilename();
         String format = filename != null && filename.contains(".") ? 
-                filename.substring(filename.lastIndexOf(".") + 1).toUpperCase() : FORMAT_JPEG;
+                filename.substring(filename.lastIndexOf(".") + 1).toUpperCase() : defaultFormat;
         byte [] imageData = file.getBytes();
         return new ImageBlob(imageData, format);		
 	}
@@ -127,6 +128,10 @@ public class CaptureUtils {
 	public static boolean isNullArray(byte [] array) {
 		return array == null || array.length == 0;
 	}
+
+	public static boolean isNullArray(int [] array) {
+		return array == null || array.length == 0;
+	}
 	
 	public static boolean isNullString(String encoding) {
 		return encoding == null || encoding.length() == 0;
@@ -150,5 +155,44 @@ public class CaptureUtils {
         .resolution(captureResult.getResolution())
         .build();		
 	}
+	
+	public static List<FingerprintData> asFingerprints(List<MultipartFile> files, int [] fingers, String defaultFormat) throws IOException {
+		List<FingerprintData> result = new ArrayList<>();
+		for(int ix=0; ix < files.size(); ix++) {
+			FingerprintData fingerprint = asFingerprintData(files.get(ix), fingers[ix], defaultFormat);
+			result.add( fingerprint);
+		}
+		return result;
+	}
+	
+	public static FingerprintData asFingerprintData(MultipartFile file, int fingerId, String defaultFormat) throws IOException {
+        String filename = file.getOriginalFilename();
+        String format = filename != null && filename.contains(".") ? 
+                filename.substring(filename.lastIndexOf(".") + 1).toUpperCase() : defaultFormat;
+        
+        return FingerprintData.builder()
+                .finger(fingerId)
+                .imageData(file.getBytes())
+                .imageFormat(format)
+                .build();		
+	}
+	
+	public static boolean importFingerprintUpload(BiometricRequest request, List<MultipartFile> images, int [] fingers) throws IOException{	
+		if ( isNullContainer(images)  && isNullArray(fingers)) {
+			return true;
+		}
+		if (images.size() != fingers.length) {
+			return false;			
+		}
+		List<FingerprintData> fingerprints = CaptureUtils.asFingerprints(images, fingers, FORMAT_BMP);
+		request.setFingerprints(fingerprints);
+		return true;		
+	}
+
+	
+	public static void importFaceUpload(BiometricRequest request, MultipartFile face) throws IOException {
+		
+	}
+	
 	
 }

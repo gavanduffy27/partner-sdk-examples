@@ -1,8 +1,11 @@
 package com.genkey.fingerprint.controller;
 
+import com.genkey.abisclient.ImageBlob;
 import com.genkey.fingerprint.model.*;
 import com.genkey.fingerprint.service.AbisService;
 import com.genkey.fingerprint.service.CaptureService;
+import com.genkey.fingerprint.util.CaptureUtils;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -12,7 +15,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -199,21 +201,8 @@ public class FingerprintController {
             @RequestPart(value = "face", required = false) MultipartFile face) {
         
         try {
-            List<FingerprintData> fingerprints = new ArrayList<>();
-            
-            for (int i = 0; i < images.size() && i < fingers.length; i++) {
-                MultipartFile file = images.get(i);
-                String filename = file.getOriginalFilename();
-                String format = filename != null && filename.contains(".") ? 
-                        filename.substring(filename.lastIndexOf(".") + 1).toUpperCase() : "BMP";
-                
-                fingerprints.add(FingerprintData.builder()
-                        .finger(fingers[i])
-                        .imageData(file.getBytes())
-                        .imageFormat(format)
-                        .build());
-            }
-            
+            List<FingerprintData> fingerprints = CaptureUtils.asFingerprints(images, fingers, CaptureUtils.FORMAT_BMP);
+                        
             EnrollmentRequest.EnrollmentRequestBuilder requestBuilder = EnrollmentRequest.builder()
                     .subjectId(subjectId)
                     .firstName(firstName)
@@ -222,10 +211,9 @@ public class FingerprintController {
                     .fingerprints(fingerprints);
 
             if (face != null && !face.isEmpty()) {
-                String faceFilename = face.getOriginalFilename();
-                String faceFormat = faceFilename != null && faceFilename.contains(".") ?
-                        faceFilename.substring(faceFilename.lastIndexOf(".") + 1).toUpperCase() : "JPG";
-                requestBuilder.faceImage(face.getBytes()).faceImageFormat(faceFormat);
+            	ImageBlob faceBlob = CaptureUtils.asImageBlob(face, CaptureUtils.FORMAT_JPEG);
+                requestBuilder.faceImage(faceBlob.getImageEncoding())
+                			 	.faceImageFormat(faceBlob.getImageFormat());
             }
             
             EnrollmentResponse response = abisService.enrollSubject(requestBuilder.build());
@@ -275,27 +263,18 @@ public class FingerprintController {
                     .targetFingers(fingers != null ? fingers : new int[0]);
 
             if (images != null && fingers != null) {
-                List<FingerprintData> fingerprints = new ArrayList<>();
-                for (int i = 0; i < images.size() && i < fingers.length; i++) {
-                    MultipartFile file = images.get(i);
-                    String filename = file.getOriginalFilename();
-                    String format = filename != null && filename.contains(".") ? 
-                            filename.substring(filename.lastIndexOf(".") + 1).toUpperCase() : "BMP";
-                    
-                    fingerprints.add(FingerprintData.builder()
-                            .finger(fingers[i])
-                            .imageData(file.getBytes())
-                            .imageFormat(format)
-                            .build());
-                }
+            	
+            	if (images.size() != fingers.length) {
+            		// Handle error
+            	}
+            	List<FingerprintData> fingerprints = CaptureUtils.asFingerprints(images, fingers, CaptureUtils.FORMAT_BMP);
                 requestBuilder.fingerprints(fingerprints);
             }
 
             if (face != null && !face.isEmpty()) {
-                String faceFilename = face.getOriginalFilename();
-                String faceFormat = faceFilename != null && faceFilename.contains(".") ?
-                        faceFilename.substring(faceFilename.lastIndexOf(".") + 1).toUpperCase() : "JPG";
-                requestBuilder.faceImage(face.getBytes()).faceImageFormat(faceFormat);
+            	ImageBlob faceBlob = CaptureUtils.asImageBlob(face, CaptureUtils.FORMAT_JPEG);
+                requestBuilder.faceImage(faceBlob.getImageEncoding())
+                			  .faceImageFormat(faceBlob.getImageFormat());
             }
             
             VerifyResponse response = abisService.verifySubject(requestBuilder.build());
@@ -343,27 +322,19 @@ public class FingerprintController {
                     .maxCandidates(maxCandidates);
 
             if (images != null && fingers != null) {
-                List<FingerprintData> fingerprints = new ArrayList<>();
-                for (int i = 0; i < images.size() && i < fingers.length; i++) {
-                    MultipartFile file = images.get(i);
-                    String filename = file.getOriginalFilename();
-                    String format = filename != null && filename.contains(".") ? 
-                            filename.substring(filename.lastIndexOf(".") + 1).toUpperCase() : "BMP";
-                    
-                    fingerprints.add(FingerprintData.builder()
-                            .finger(fingers[i])
-                            .imageData(file.getBytes())
-                            .imageFormat(format)
-                            .build());
-                }
+            
+            	if (images.size() != fingers.length) {
+            		// Handle error response
+            	}
+            	
+                List<FingerprintData> fingerprints = CaptureUtils.asFingerprints(images, fingers, CaptureUtils.FORMAT_BMP);
                 requestBuilder.fingerprints(fingerprints);
             }
 
             if (face != null && !face.isEmpty()) {
-                String faceFilename = face.getOriginalFilename();
-                String faceFormat = faceFilename != null && faceFilename.contains(".") ?
-                        faceFilename.substring(faceFilename.lastIndexOf(".") + 1).toUpperCase() : "JPG";
-                requestBuilder.faceImage(face.getBytes()).faceImageFormat(faceFormat);
+            	ImageBlob faceBlob = CaptureUtils.asImageBlob(face, CaptureUtils.FORMAT_JPEG);
+            	requestBuilder.faceImage(faceBlob.getImageEncoding())
+            				   .faceImageFormat(faceBlob.getImageFormat());
             }
             
             IdentifyResponse response = abisService.identifySubject(requestBuilder.build());

@@ -1,6 +1,5 @@
 package com.genkey.fingerprint.model;
 
-import lombok.Builder;
 import lombok.Data;
 
 /**

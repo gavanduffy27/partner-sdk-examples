@@ -91,13 +91,13 @@ public class EnrollmentDataContainer {
 	 */
 	public void importUploadFingerPrints(List<MultipartFile> imageFiles, int [] fingers, int resolution) throws IOException {
 		for(int ix=0; ix < imageFiles.size(); ix++) {
-			ImageData imageData = CaptureUtils.asImageData(imageFiles.get(ix), resolution);
+			ImageData imageData = CaptureUtils.asImageData(imageFiles.get(ix), resolution, CaptureUtils.FORMAT_BMP);
 			this.addImageData(imageData, fingers[ix]);
 		}
 	}
 	
 	public void importUploadFace(MultipartFile faceFile) throws IOException {
-		ImageBlob imageBlob = CaptureUtils.asImageBlob(faceFile);
+		ImageBlob imageBlob = CaptureUtils.asImageBlob(faceFile, CaptureUtils.FORMAT_JPEG);
 		this.getEnrolmentReference().setFacePortrait(imageBlob);
 	}
 	
