@@ -9,7 +9,7 @@ SET JAVA_HOME=C:\Program Files\Java\jdk-17
 SET PATH=%JAVA_HOME%\bin;%PATH%
 
 REM Set native library path for ABIS SDK
-SET JAVA_TOOL_OPTIONS=-Djava.library.path=C:\xampp\htdocs\AFIS\partner-sdk-examples\abisclient-dll
+SET JAVA_TOOL_OPTIONS=-Djava.library.path=c:\Users\Rodb\Desktop\AFIS\6.2.2-SNAPSHOT\abisclient-dll
 
 REM Navigate to project directory
 cd /d "%~dp0"
@@ -21,6 +21,6 @@ echo Library Path: %JAVA_TOOL_OPTIONS%
 echo.
 
 REM Run with Maven
-mvn spring-boot:run -Dspring-boot.run.jvmArguments="-Djava.library.path=C:\xampp\htdocs\AFIS\partner-sdk-examples\abisclient-dll"
+mvn spring-boot:run -Dspring-boot.run.jvmArguments="-Djava.library.path=c:\Users\Rodb\Desktop\AFIS\6.2.2-SNAPSHOT\abisclient-dll"
 
 pause
