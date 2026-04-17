@@ -745,12 +745,12 @@ public class IntegratedBiometricsScanner implements FingerprintScanner {
     @Override
     public MultipleFingerCaptureResult captureMultiple(int[] fingers, int timeout) {
         if (!initialized || ibDevice == null) {
-        	CaptureResult result = CaptureResult.builder()
+            return MultipleFingerCaptureResult.multiBuilder()
                     .success(false)
                     .statusCode(-1)
                     .statusMessage("Scanner not initialized or device not opened")
+                    .fingers(fingers)
                     .build();
-        	return new MultipleFingerCaptureResult(result, fingers);
         }
         
         long startTime = System.currentTimeMillis();
@@ -805,10 +805,11 @@ public class IntegratedBiometricsScanner implements FingerprintScanner {
                     ? fingerImages[0] 
                     : singleResult.getImageData();
             
-            CaptureResult captureResult = CaptureResult.builder()
+            MultipleFingerCaptureResult result = MultipleFingerCaptureResult.multiBuilder()
                     .success(singleResult.isSuccess())
                     .statusCode(singleResult.getStatusCode())
                     .statusMessage(singleResult.getStatusMessage())
+                    .fingers(fingers)
                     .imageData(mainImageData)
                     .imageFormat("BMP") // Use BMP format for ABIS to convert to WSQ
                     .quality(singleResult.getQuality())
@@ -816,8 +817,9 @@ public class IntegratedBiometricsScanner implements FingerprintScanner {
                     .height(singleResult.getHeight())
                     .resolution(singleResult.getResolution())
                     .captureTimeMs(System.currentTimeMillis() - startTime)
+//                    .fingerImages(fingerImages)
                     .build();
-            MultipleFingerCaptureResult result = new MultipleFingerCaptureResult(captureResult, fingers);	
+            
             // Broadcast capture success for each finger in multiple finger capture
             if (singleResult.isSuccess()) {
                 for (int i = 0; i < fingers.length; i++) {
@@ -867,12 +869,12 @@ public class IntegratedBiometricsScanner implements FingerprintScanner {
             return result;
         } catch (Exception e) {
             log.error("Error in captureMultiple: {}", e.getMessage(), e);
-            CaptureResult result =  CaptureResult.builder()
+            return MultipleFingerCaptureResult.multiBuilder()
                     .success(false)
                     .statusCode(-1)
-                    .statusMessage("Capture failed: " + e.getMessage())                    
+                    .statusMessage("Capture failed: " + e.getMessage())
+                    .fingers(fingers)
                     .build();
-            return new MultipleFingerCaptureResult(result, fingers);
         }
     }
     

@@ -160,12 +160,12 @@ public class SecuGenScanner implements FingerprintScanner {
         log.info("SecuGen multiple capture for fingers {} with timeout {}ms", java.util.Arrays.toString(fingers), timeout);
         
         if (!initialized) {
-        	CaptureResult result = CaptureResult.builder()
+            return MultipleFingerCaptureResult.multiBuilder()
                     .success(false)
                     .statusCode(-1)
                     .statusMessage("Scanner not initialized")
+                    .fingers(fingers)
                     .build();
-        	return new MultipleFingerCaptureResult(result, fingers);
         }
         
         // For now, implement multiple capture by calling single capture for each finger
@@ -178,16 +178,28 @@ public class SecuGenScanner implements FingerprintScanner {
             CaptureResult singleResult = capture(primaryFinger, timeout);
             
             // Convert to MultipleFingerCaptureResult
-            return new MultipleFingerCaptureResult(singleResult, fingers); 
+            return MultipleFingerCaptureResult.multiBuilder()
+                    .success(singleResult.isSuccess())
+                    .statusCode(singleResult.getStatusCode())
+                    .statusMessage(singleResult.getStatusMessage())
+                    .fingers(fingers)
+                    .imageData(singleResult.getImageData())
+                    .imageFormat(singleResult.getImageFormat())
+                    .quality(singleResult.getQuality())
+                    .width(singleResult.getWidth())
+                    .height(singleResult.getHeight())
+                    .resolution(singleResult.getResolution())
+                    .captureTimeMs(singleResult.getCaptureTimeMs())
+                    .build();
                     
         } catch (Exception e) {
             log.error("SecuGen multiple capture failed", e);
-            CaptureResult result = CaptureResult.builder()
-                        .success(false)
-                        .statusCode(-2)
-                        .statusMessage("Multiple capture failed: " + e.getMessage())
-                        .build();
-            	return new MultipleFingerCaptureResult(result, fingers);
+            return MultipleFingerCaptureResult.multiBuilder()
+                    .success(false)
+                    .statusCode(-2)
+                    .statusMessage("Multiple capture failed: " + e.getMessage())
+                    .fingers(fingers)
+                    .build();
         }
     }
     

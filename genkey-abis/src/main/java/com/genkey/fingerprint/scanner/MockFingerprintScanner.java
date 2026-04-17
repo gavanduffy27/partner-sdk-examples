@@ -97,12 +97,12 @@ public class MockFingerprintScanner implements FingerprintScanner {
         log.info("Mock multiple capture for fingers {} with timeout {}ms", java.util.Arrays.toString(fingers), timeout);
         
         if (!initialized) {
-        	CaptureResult result = CaptureResult.builder()
+            return MultipleFingerCaptureResult.multiBuilder()
                     .success(false)
                     .statusCode(-1)
                     .statusMessage("Scanner not initialized")
+                    .fingers(fingers)
                     .build();
-        	return new MultipleFingerCaptureResult(result, fingers);
         }
         
         long startTime = System.currentTimeMillis();
@@ -117,10 +117,11 @@ public class MockFingerprintScanner implements FingerprintScanner {
             
             long captureTime = System.currentTimeMillis() - startTime;
             
-            CaptureResult result = CaptureResult.builder()
+            return MultipleFingerCaptureResult.multiBuilder()
                     .success(true)
                     .statusCode(0)
                     .statusMessage("Multiple capture successful")
+                    .fingers(fingers)
                     .imageData(imageData)
                     .imageFormat(config.getImageFormat())
                     .quality(quality)
@@ -129,16 +130,15 @@ public class MockFingerprintScanner implements FingerprintScanner {
                     .resolution(config.getResolution())
                     .captureTimeMs(captureTime)
                     .build();
-            return new MultipleFingerCaptureResult(result, fingers);
                     
         } catch (Exception e) {
             log.error("Mock multiple capture failed", e);
-            CaptureResult result = CaptureResult.builder()
+            return MultipleFingerCaptureResult.multiBuilder()
                     .success(false)
                     .statusCode(-2)
                     .statusMessage("Multiple capture failed: " + e.getMessage())
+                    .fingers(fingers)
                     .build();
-            return new MultipleFingerCaptureResult(result, fingers);
         }
     }
     
