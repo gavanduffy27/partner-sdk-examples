@@ -91,6 +91,11 @@ public class CaptureUtils {
 		return new ImageBlob(imageData, format);
 	}
 
+	public static ImageBlob asImageBlob(String base64Data, String format) {
+		byte[] imageData = java.util.Base64.getDecoder().decode(base64Data);
+		return new ImageBlob(imageData, format);
+	}
+
 	public static List<CaptureResult> segmentCaptureResult(MultipleFingerCaptureResult multiCaptureResult,
 			int[] fingers) {
 
