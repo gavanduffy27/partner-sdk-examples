@@ -1,8 +1,6 @@
 package com.genkey.partner.workshop;
 
-import com.genkey.abisclient.Enums.GKSwitchParameter;
 import com.genkey.abisclient.ImageContext;
-import com.genkey.abisclient.ImageContextSDK;
 import com.genkey.abisclient.ImageData;
 import com.genkey.abisclient.examples.utils.FileUtils;
 import com.genkey.abisclient.examples.utils.TestDataManager;
@@ -10,7 +8,6 @@ import com.genkey.partner.example.PartnerExample;
 
 public class TestAppTests extends BMSWorkshopExample {
 
-  //private static final String SegmentationFileName = "testFourFingerDGIE";
   private static final String SegmentationFileName = "dgie_test_l2";
 
   public static void main(String[] args) {

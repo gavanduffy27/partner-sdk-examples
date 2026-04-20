@@ -4,9 +4,9 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
 
 import javax.imageio.ImageIO;
 
@@ -23,8 +23,30 @@ public class ImageUtils {
     }
   }
 
+  public static ImageData rotateImage180(ImageData imageData) {
+    int wd = imageData.getWidth();
+    int ht = imageData.getHeight();
+    byte[] srcData = imageData.getPixelData();
+    byte[] newImage = new byte[imageData.getWidth() * imageData.getHeight()];
+    for (int row = 0; row < ht; row++) {
+      int tgtRow = ht - row - 1;
+      for (int col = 0; col < wd; col++) {
+        int tgtCol = wd - col - 1;
+        int srcIndex = getPixelIndex(row, col, wd, ht);
+        int tgtIndex = getPixelIndex(tgtRow, tgtCol, wd, ht);
+        newImage[tgtIndex] = srcData[srcIndex];
+      }
+    }
+    return new ImageData(wd, ht, newImage, imageData.getResolution());
+  }
+
+  public static int getPixelIndex(int row, int col, int wd, int ht) {
+    return row * wd + col;
+  }
+
   public static BufferedImage asBufferedImage(ImageData imageData) {
-	  return createBufferedImage(imageData.getWidth(), imageData.getHeight(), imageData.getPixelData());
+    return createBufferedImage(
+        imageData.getWidth(), imageData.getHeight(), imageData.getPixelData());
   }
 
   public static BufferedImage createBufferedImage(int wd, int ht, byte[] pixels) {
@@ -49,13 +71,21 @@ public class ImageUtils {
     }
     BufferedImage result;
     try {
-      AffineTransform txf = AffineTransform.getRotateInstance(radians, srcImage.getWidth()/2, srcImage.getHeight()/2);
+      AffineTransform txf =
+          AffineTransform.getRotateInstance(
+              radians, srcImage.getWidth() / 2, srcImage.getHeight() / 2);
       AffineTransformOp op = new AffineTransformOp(txf, null);
       result = op.filter(srcImage, null);
     } catch (Exception e) {
-    	e.printStackTrace();
+      e.printStackTrace();
       result = srcImage;
     }
     return result;
+  }
+
+  public static boolean checkEqual(ImageData image1, ImageData image2) {
+    return image1.getHeight() == image2.getHeight()
+        && image1.getWidth() == image2.getWidth()
+        && Arrays.equals(image1.getPixelData(), image2.getPixelData());
   }
 }

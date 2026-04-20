@@ -12,6 +12,7 @@ import com.genkey.partner.example.PartnerExample;
 import com.genkey.partner.example.PartnerTestSuite;
 import com.genkey.partner.utils.ImageUtils;
 import com.genkey.platform.utils.FileUtils;
+import com.genkey.platform.utils.Profiler;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -21,7 +22,7 @@ import java.nio.file.Files;
 public class SegmentationExample extends PartnerExample {
 
   // final static String TestImage="serge_image2";
-  static final String TestImage = "full_capture_thumbs";
+  static final String TestImage = "full_capture_left";
 
   static String argumentFile = null;
 
@@ -46,7 +47,7 @@ public class SegmentationExample extends PartnerExample {
   @Override
   protected void runAllExamples() {
     // testSegmentation();
-//    testSegmentation2();
+    //    testSegmentation2();
     testRotation();
   }
 
@@ -175,6 +176,7 @@ public class SegmentationExample extends PartnerExample {
       argumentFile = TestDataManager.getImageFile(TestImage);
     }
     testRotation(argumentFile);
+    testRotation2(argumentFile);
   }
 
   private void testRotation(String fileName) {
@@ -187,13 +189,73 @@ public class SegmentationExample extends PartnerExample {
       e1.printStackTrace();
     }
     String baseName = imageName + "_rotate";
-    ImageData rotatedImage = ImageUtils.rotateImageData(imageData, Math.PI);
+    String baseNameR = imageName + "_restore";
+    Profiler.TimeStamp ts = Profiler.getTimer();
+    ImageData rotatedImage180 = ImageUtils.rotateImage180(imageData);
+    double cost1 = ts.getDurationMillis();
+    ts.reset();
+    ImageData rotatedImage2 = ImageUtils.rotateImage180(rotatedImage180);
+    double cost2 = ts.getDurationMillis();
+    
+    double cost = (cost1+cost2)/2;
+    printResult("Cost", cost);
+    
+    boolean status = ImageUtils.checkEqual(imageData, rotatedImage2);
+    if (!status) {
+      println("Not perfect buddy");
+    }
+    exportImage(imageData, EXPORT_PATH, imageName, ImageData.FORMAT_BMP);
+    exportImage(rotatedImage180, EXPORT_PATH, baseName, ImageData.FORMAT_BMP);
+    exportImage(rotatedImage2, EXPORT_PATH, baseNameR, ImageData.FORMAT_BMP);
+
+    String exportFile180 = FileUtils.expandConfigFile(EXPORT_PATH, baseName, ImageData.FORMAT_BMP);
     String exportFile = FileUtils.expandConfigFile(EXPORT_PATH, baseName, ImageData.FORMAT_BMP);
     try {
-    	byte [] encoding = rotatedImage.asEncodedImage(ImageData.FORMAT_BMP);
-    	FileUtils.byteArrayToFile(encoding, exportFile);
+      byte[] encoding = rotatedImage180.asEncodedImage(ImageData.FORMAT_BMP);
+      FileUtils.byteArrayToFile(encoding, exportFile);
     } catch (Exception e) {
-    	e.printStackTrace();
+      e.printStackTrace();
+    }
+  }
+
+  private void testRotation2(String fileName) {
+    ImageData imageData = null;
+    String imageName = FileUtils.baseName(fileName);
+    try {
+      byte[] encoding = FileUtils.byteArrayFromFile(fileName);
+      imageData = new ImageData(encoding, ImageData.FORMAT_BMP);
+    } catch (IOException e1) {
+      e1.printStackTrace();
+    }
+    String baseName = imageName + "_rotate2";
+    String baseNameR = imageName + "_restore2";
+
+    ImageData baseImage = imageData.clone();
+    exportImage(imageData, EXPORT_PATH, imageName, ImageData.FORMAT_BMP);
+    Profiler.TimeStamp ts = Profiler.getTimer();
+    imageData.rotateImage180();
+    double cost1 = ts.getDurationMillis();
+    exportImage(imageData, EXPORT_PATH, baseName, ImageData.FORMAT_BMP);
+    ts.reset();
+    imageData.rotateImage180();
+    double cost2 = ts.getDurationMillis();
+    double cost = (cost1 + cost2)/2;
+    printResult("Cost2", cost);
+    exportImage(imageData, EXPORT_PATH, baseNameR, ImageData.FORMAT_BMP);
+
+    boolean status = ImageUtils.checkEqual(imageData, baseImage);
+    if (!status) {
+      println("Not perfect buddy");
+    }
+  }
+
+  private void exportImage(ImageData image, String exportFolder, String baseName, String format) {
+    String fileName = FileUtils.expandConfigFile(exportFolder, baseName, format);
+    try {
+      byte[] encoding = image.asEncodedImage(format);
+      FileUtils.byteArrayToFile(encoding, fileName);
+    } catch (Exception e) {
+      e.printStackTrace();
     }
   }
 }
