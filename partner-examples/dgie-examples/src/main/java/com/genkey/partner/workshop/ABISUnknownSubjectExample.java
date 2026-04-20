@@ -160,14 +160,13 @@ public class ABISUnknownSubjectExample extends BMSWorkshopExample{
 		
 		if ( ! matchesFound && insertIfNoMatch) {
 			insertTestSubject(biographicId, true);
-		}
-		
+		}		
 	}
 	
 	public void insertExample() {
 		insertTestSubject(TestSubject, true);
 	}
-
+	
 	public void insertTestSubject(String biographicId, boolean withFace) {
 		// Some kind of biographic record
 		int subjectId = Integer.valueOf(biographicId);
@@ -178,6 +177,9 @@ public class ABISUnknownSubjectExample extends BMSWorkshopExample{
 		BiographicProfileRecord record = EnrollmentUtils.getBiographicRecord(String.valueOf(subjectId), "John", "Brown");		
 		
 		SubjectEnrollmentReference enrollRef = new SubjectEnrollmentReference(biographicId);
+		
+		
+		
 		enrollRef.setTargetFingers(TenFingers);
 
 		int sampleIndex=1;
@@ -195,6 +197,9 @@ public class ABISUnknownSubjectExample extends BMSWorkshopExample{
 		
 		
 	}
-
 	
 }
+
+
+
+

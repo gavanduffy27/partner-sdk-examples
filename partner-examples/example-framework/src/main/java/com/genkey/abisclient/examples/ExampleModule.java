@@ -61,7 +61,7 @@ public abstract class ExampleModule extends GKTestCase4 implements IExampleTest 
   public static String V2Right = "v2-right";
 
   public static String Thumbs01 = "Thumbs_01";
-  
+
   String previousDirectory = null;
 
   protected static String ImageSetPath(String setName) {
@@ -390,11 +390,11 @@ public abstract class ExampleModule extends GKTestCase4 implements IExampleTest 
   }
 
   public static void printJsonObject(String header, Object object) {
-	    printHeader(header);
-	    String text = JsonUtils.jsonMarshallPretty(object);
-	    printMessage(text);
-	  }
-  
+    printHeader(header);
+    String text = JsonUtils.jsonMarshallPretty(object);
+    printMessage(text);
+  }
+
   public static String printArray(int[] values) {
     return CollectionUtils.containerToString(new ArrayIterator<Integer>(values));
   }

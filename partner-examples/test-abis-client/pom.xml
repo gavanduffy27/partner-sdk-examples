@@ -25,13 +25,12 @@
       <artifactId>example-framework</artifactId>
     </dependency>
 
-  <dependency>
+    <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>client-external-dependencies</artifactId>
       <version>${project.version}</version>
       <scope>compile</scope>
     </dependency>
-
 
   </dependencies>
 
