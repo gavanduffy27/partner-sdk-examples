@@ -61,21 +61,24 @@ public class IncrementalEnrolScenario extends IncrementalEnrolTests {
    * @param veto
    * @param partialFingerEnrollment
    */
-  public void enrolFaceFingers(String testSubject, boolean veto, boolean partialFingerEnrollment) {
+  public void enrolFaceFingers(String testSubject, boolean veto, boolean timeConstrained) {
     // First enrol with face
 
     int subjectNumber = Integer.valueOf(testSubject);
 
     GenkeyABISService abisService = ABISServiceModule.getABISService();
     BiographicService biographicService = DGIEServiceModule.getBiographicService();
-    BiographicProfileRecord record =
-        EnrollmentUtils.getBiographicRecord(TestSubjectID, "John", "Brown");
-
+    
     EnquireStatus status = abisService.enquireSubject(testSubject);
     if (status.existsSubject()) {
       processFlow("Handle existing subject");
       return;
     }
+   
+    
+    BiographicProfileRecord record =
+        EnrollmentUtils.getBiographicRecord(TestSubjectID, "John", "Brown");
+
 
     SubjectEnrollmentReference enrollRef = new SubjectEnrollmentReference(testSubject);
     EnrollmentUtils.enrollFacePortrait(enrollRef, 1);
@@ -111,7 +114,7 @@ public class IncrementalEnrolScenario extends IncrementalEnrolTests {
 
     if (enquireStatus.fingerCompletionStatus() != CompletionStatus.Complete) {
       int[] targetFingers;
-      if (partialFingerEnrollment) {
+      if (timeConstrained) {
         targetFingers = enquireStatus.askEnrolmentHint();
       } else {
         targetFingers = enquireStatus.enquireMissingFingers(EnquireStatus.TenFingers);
@@ -124,7 +127,7 @@ public class IncrementalEnrolScenario extends IncrementalEnrolTests {
 
     if (updateResponse.hasMatchResults()) {
       PrintMessage("Unexpected duplicates detected on update");
-      if (acceptMatchResults(updateResponse, veto)) {
+      if (!acceptMatchResults(updateResponse, veto)) {
         printMessage("Rejecting duplicates");
       } else {
         handleLateDuplicate(testSubject, updateResponse);
@@ -151,8 +154,8 @@ public class IncrementalEnrolScenario extends IncrementalEnrolTests {
 
     if (enquireStatus.fingerCompletionStatus() != CompletionStatus.Complete) {
       int[] targetFingers;
-      if (partialFingerEnrollment) {
-        // will come back with right hand
+      if (timeConstrained) {
+        // will come back with left hand
         targetFingers = enquireStatus.askEnrolmentHint();
       } else {
         targetFingers = enquireStatus.enquireMissingFingers(EnquireStatus.TenFingers);
@@ -191,6 +194,7 @@ public class IncrementalEnrolScenario extends IncrementalEnrolTests {
     if (!enquireStatus.fingerEnrollmentComplete(MaxMissingFingers)) {
       // will ask for thumbs
       int[] fingers = enquireStatus.askEnrolmentHint();
+      updateRef4.setTargetFingers(fingers);
       EnrollmentUtils.enrollFingerPrintSubject(updateRef4, subjectNumber, 1, 1);
     }
 
