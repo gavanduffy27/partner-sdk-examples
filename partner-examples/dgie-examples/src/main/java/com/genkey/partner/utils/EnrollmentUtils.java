@@ -156,6 +156,11 @@ public class EnrollmentUtils {
 		}
 	}
 	
+	public static void enrollBiographics(SubjectEnrollmentReference subjectReference, String subjectId) {
+		BiographicProfileRecord record = EnrollmentUtils.generateBiographicRecord(subjectId);
+		Map<String,String> biographicData = record.getBiographicData();
+		subjectReference.setBiographicData(biographicData);
+	}
 	
 	public static ImageBlob getSubjectPortrait(String subjectId) {
 		return getSubjectPortrait(subjectId,1);
@@ -239,7 +244,7 @@ public class EnrollmentUtils {
 	// public static void enrollSubject()
 
 	public static BiographicProfileRecord getSimpleBiographicRecord(String biographicId, String firstName,
-			String lastName, String gender) {
+			String lastName, Gender gender) {
 		BiographicProfileRecord record = PartnerTestSuite.getBiographicService().createProfileRecord(biographicId);
 
 		Date dob = DateUtils.mkDate(27, 1, 1964);
@@ -247,11 +252,33 @@ public class EnrollmentUtils {
 		record.setFirstName(firstName);
 		record.setLastName(lastName);
 		record.setDateOfBirth(dob);
-		record.setGender(gender);
+		record.setGenderType(gender);
 		byte[] resourceData = readResourceBytes("passport.jpg");
 		ImageBlob blob = new ImageBlob(resourceData, ImageUtils.EXT_JPEG);
 		record.setPortrait(blob);
 
+		return record;
+	}
+	
+	
+	public static String[] firstNames = {"fred","harry","patrick","peter","paul","david"};
+	public static String[] lastNames= {"Brown","Jones","Black","Whitehouse","Goldstone","Obama"};
+	
+	
+	public static BiographicProfileRecord generateBiographicRecord(String biographicId) {
+		int subjectNumber = Integer.valueOf(biographicId);
+		String firstName = firstNames[subjectNumber % firstNames.length];
+		String lastName = lastNames[subjectNumber % lastNames.length];
+		Gender gender = subjectNumber % 2 == 0 ? Gender.Male : Gender.Female;
+		int year = 1980 + subjectNumber % 10;
+		int month = Math.max(subjectNumber % 12,1);
+		int day = Math.max(subjectNumber % 28, 1);
+		Date dob = DateUtils.mkDate(day, month, year);
+		BiographicProfileRecord record = PartnerTestSuite.getBiographicService().createProfileRecord(biographicId);
+		record.setFirstName(firstName);
+		record.setLastName(lastName);
+		record.setDateOfBirth(dob);
+		record.setGenderType(gender);
 		return record;
 	}
 

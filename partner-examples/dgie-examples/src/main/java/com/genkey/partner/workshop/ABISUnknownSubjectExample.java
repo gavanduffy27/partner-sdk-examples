@@ -9,7 +9,9 @@ import com.genkey.abisclient.service.GenkeyABISService;
 import com.genkey.abisclient.service.MatchEngineResponse;
 import com.genkey.abisclient.service.params.EnquireStatus;
 import com.genkey.abisclient.transport.SubjectEnrollmentReference;
+import com.genkey.partner.biographic.BiographicAttribute;
 import com.genkey.partner.biographic.BiographicProfileRecord;
+import com.genkey.partner.biographic.BiographicProfileRecord.Gender;
 import com.genkey.partner.biographic.BiographicService;
 import com.genkey.partner.dgie.DGIEServiceModule;
 import com.genkey.partner.example.PartnerExample;
@@ -39,11 +41,11 @@ public class ABISUnknownSubjectExample extends BMSWorkshopExample{
 	}
 
 	public void queryFaceExample(String testSubject) {
-		queryFaceExample(testSubject, false);
+		queryFaceExample(testSubject, false, false);
 	}
 	
 
-	public void queryFaceExample(String biographicID, boolean insertIfNoMatch) {
+	public void queryFaceExample(String biographicID, boolean insertIfNoMatch, boolean withBiographics) {
 		GenkeyABISService abisService = ABISServiceModule.getABISService();
 		EnquireStatus status = abisService.enquireSubject(biographicID);
 		if (status.existsSubject()) {
@@ -52,6 +54,17 @@ public class ABISUnknownSubjectExample extends BMSWorkshopExample{
 		SubjectEnrollmentReference enrollRef = new SubjectEnrollmentReference();
 		enrollRef.setSubjectID(biographicID);
 		EnrollmentUtils.enrollFacePortrait(enrollRef, 1);
+		
+		if (withBiographics) {
+			
+			// Read the biographics from the unknown subject's document.
+			BiographicProfileRecord biographicRecord = EnrollmentUtils.getSimpleBiographicRecord(biographicID, "Shaka", "Dacaptain",Gender.Male);
+			
+			// Add the string encoded properties of the biographic record as matching context with existing records
+			//biographicRecord.exportToProperties(enrollRef.getBiographicData());
+			enrollRef.setBiographicData(biographicRecord.getBiographicData());
+		}
+		
 		MatchEngineResponse response = abisService.querySubject(enrollRef);		
 		boolean matchesFound;
 		if (response.hasMatchResults()) {

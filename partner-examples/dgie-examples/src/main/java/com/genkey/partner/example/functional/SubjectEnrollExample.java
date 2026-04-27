@@ -18,6 +18,7 @@ import com.genkey.abisclient.service.params.EnquireStatus;
 import com.genkey.abisclient.transport.SubjectEnrollmentReference;
 import com.genkey.partner.biographic.BiographicIdentifier;
 import com.genkey.partner.biographic.BiographicProfileRecord;
+import com.genkey.partner.biographic.BiographicProfileRecord.Gender;
 import com.genkey.partner.biographic.BiographicService;
 import com.genkey.partner.biographic.BiographicServiceModule;
 import com.genkey.partner.dgie.DGIEServiceModule;
@@ -337,7 +338,7 @@ public class SubjectEnrollExample extends FunctionalTestExample {
 		}
 
 		BiographicProfileRecord biographicRecord = EnrollmentUtils.getSimpleBiographicRecord(biographicId, "john",
-				"doe", "male");
+				"doe", Gender.Male);
 		boolean status = service.insertBiographicRecord(biographicRecord);
 
 		BiographicProfileRecord record2 = service.fetchBiographicRecord(biographicId);

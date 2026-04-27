@@ -11,14 +11,24 @@ public class IncrementalEnroll4Steps extends IncrementalEnrolTests {
   static boolean enforceQuality = true;
 
   public static void main(String[] args) {
-    PartnerExample test = new IncrementalEnroll4Steps();
+    PartnerExample test = new IncrementalEnroll4Steps(true);
     test.processCommandLine(args);
   }
+  
+  
+  public IncrementalEnroll4Steps() {
+	  
+  }
 
+  public IncrementalEnroll4Steps(boolean useBiographic) {
+	  super(useBiographic);
+  }
+  
+  
   @Override
   protected void runAllExamples() {
-    simple4StepEnroll();
     initialEnrollFace();
+    simple4StepEnroll();
     initialEnrollFinger();
     nextEnrollStep();
   }
@@ -31,8 +41,8 @@ public class IncrementalEnroll4Steps extends IncrementalEnrolTests {
   }
 
   public void performNextTest() {
-//	this.performEnrolNextStep(TestSubjectId, EnrollmentStep.Face);
-//    this.performEnrolNextStep(TestSubjectId, EnrollmentStep.RightHand);
+    //	this.performEnrolNextStep(TestSubjectId, EnrollmentStep.Face);
+    //    this.performEnrolNextStep(TestSubjectId, EnrollmentStep.RightHand);
     this.performEnrolNextStep(TestSubjectId, EnrollmentStep.LeftHand);
     this.performEnrolNextStep(TestSubjectId, EnrollmentStep.Complete);
   }

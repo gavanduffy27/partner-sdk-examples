@@ -5,12 +5,16 @@ import com.genkey.abisclient.service.MatchEngineResponse;
 import com.genkey.abisclient.service.UpdateResponse;
 import com.genkey.abisclient.service.params.EnquireStatus;
 import com.genkey.abisclient.transport.SubjectEnrollmentReference;
+import com.genkey.partner.biographic.BiographicProfileRecord;
+import com.genkey.partner.biographic.BiographicProfileRecord.Gender;
 import com.genkey.partner.utils.EnrollmentUtils;
 
 public class IncrementalEnrolTests extends BMSWorkshopExample {
 
   static final String TestSubjectID2 = "2";
   static String TestSubjectID = "1";
+
+  boolean enrollBiographics = false;
 
   // Guidance update on face-quality to be addressed later
   static double FaceQualityThreshold = 0.7;
@@ -27,6 +31,14 @@ public class IncrementalEnrolTests extends BMSWorkshopExample {
     Thumbs,
     EnrollmentHint,
     Complete
+  }
+
+  public IncrementalEnrolTests() {
+    this(true);
+  }
+
+  public IncrementalEnrolTests(boolean useBiographicOnQuery) {
+    this.setEnrollBiographics(useBiographicOnQuery);
   }
 
   /**
@@ -112,6 +124,11 @@ public class IncrementalEnrolTests extends BMSWorkshopExample {
       subjectRef.setTargetFingers(targetFingers);
       EnrollmentUtils.enrollFingerPrintSubject(subjectRef, Integer.parseInt(subjectId), 1, 1);
     }
+    if (this.isEnrollBiographics() && exists) {
+      BiographicProfileRecord profile =
+          EnrollmentUtils.getSimpleBiographicRecord(null, "john", "doe", Gender.Male);
+      subjectRef.setBiographicData(profile.getBiographicData());
+    }
 
     MatchEngineResponse response;
     if (isInsert) {
@@ -150,6 +167,9 @@ public class IncrementalEnrolTests extends BMSWorkshopExample {
 
     boolean isInsert = !exists;
 
+    SubjectEnrollmentReference enrolRef  = this.acquireBiometrics(subjectId, step, enquireStatus, this.isEnrollBiographics());
+    
+    /*
     SubjectEnrollmentReference enrolRef = new SubjectEnrollmentReference(subjectId);
 
     if (step == EnrollmentStep.Face) {
@@ -160,55 +180,108 @@ public class IncrementalEnrolTests extends BMSWorkshopExample {
       int subjectNumber = Integer.valueOf(subjectId);
       EnrollmentUtils.enrollFingerPrintSubject(enrolRef, subjectNumber, 1, 1);
     }
-
-    /*
-     */
+    */
 
     MatchEngineResponse response;
     if (isInsert) {
       response = abisService.insertIfNoDuplicates(enrolRef);
       if (response.hasMatchResults()) {
-    	  if (super.acceptMatchResults(response, false)) {
-    		  return true;
-    	  }
+        if (super.acceptMatchResults(response, false)) {
+          return true;
+        }
       }
     } else {
       response = abisService.updateSubject(enrolRef);
       if (response.hasMatchResults()) {
-    	  super.handleLateDuplicate(subjectId, response);
+        super.handleLateDuplicate(subjectId, response);
       }
     }
-
 
     enquireStatus = abisService.enquireSubject(subjectId);
     return enquireStatus.enrollmentComplete(MaxMissingFingers, FaceQualityThreshold);
   }
 
+  protected SubjectEnrollmentReference acquireBiometrics(String subjectId, EnrollmentStep step) {
+	  return acquireBiometrics(subjectId, step, EnquireStatus.UnknownStatus);
+  }
+  
+  protected SubjectEnrollmentReference acquireBiometrics(String subjectId, EnrollmentStep step, EnquireStatus status) {
+	  return acquireBiometrics(subjectId, step, status, this.isEnrollBiographics());
+  }
+  
+  protected SubjectEnrollmentReference acquireBiometrics(String subjectId, EnrollmentStep step, EnquireStatus status, boolean withBiographics) {
+	  SubjectEnrollmentReference result = new SubjectEnrollmentReference(subjectId);
+	  int subjectNumber = Integer.valueOf(subjectId);
+	  acquireBiometrics(result, subjectNumber, step, status, withBiographics);	  
+	  return result;
+  }
+  
+  protected void acquireBiometrics(
+      SubjectEnrollmentReference enrolRef,
+      int subjectNumber,
+      EnrollmentStep step,
+      EnquireStatus enquireStatus, boolean withBiographics) {
+    if (step == EnrollmentStep.Face) {
+      EnrollmentUtils.enrollFacePortrait(enrolRef, 1);
+    } else {
+      int[] targetFingers = selectTargetFingers(enquireStatus, step);
+      enrolRef.setTargetFingers(targetFingers);
+      EnrollmentUtils.enrollFingerPrintSubject(enrolRef, subjectNumber, 1, 1);
+    }
+    if (withBiographics) {
+    	EnrollmentUtils.enrollBiographics(enrolRef, TestSubjectID);
+    }
+  }
+
+  public MatchEngineResponse performQuery(String subjectId, EnrollmentStep step, boolean withBiographics) {
+	  SubjectEnrollmentReference enrollRef = acquireBiometrics(subjectId, step, EnquireStatus.UnknownStatus, true);
+	  
+	    GenkeyABISService abisService = this.getAbisService();
+
+	    if (!abisService.testAvailable()) {
+	      return null;
+	    }
+	  
+	   MatchEngineResponse response = abisService.querySubject(enrollRef);	   	   
+	   return response;	  
+  }
+
   private int[] selectTargetFingers(EnquireStatus enquireStatus, EnrollmentStep step) {
-	  int [] targetFingers;
+    int[] targetFingers;
+    if (enquireStatus == null) {
+      enquireStatus = EnquireStatus.UnknownStatus;
+    }
     switch (step) {
       case LeftHand:
-    	  targetFingers = enquireStatus.enquireMissingFingers(EnquireStatus.LeftHand);
-    	  break;
+        targetFingers = enquireStatus.enquireMissingFingers(EnquireStatus.LeftHand);
+        break;
       case RightHand:
-    	  targetFingers = EnquireStatus.RightHand;
-    	  break;
+        targetFingers = EnquireStatus.RightHand;
+        break;
       case Thumbs:
-    	  targetFingers = EnquireStatus.Thumbs;
-    	  break;
-    	  
+        targetFingers = EnquireStatus.Thumbs;
+        break;
+
       case EnrollmentHint:
-    	  targetFingers = enquireStatus.askEnrolmentHint();
-    	  break;
+        targetFingers = enquireStatus.askEnrolmentHint();
+        break;
       case Complete:
       default:
-    	  targetFingers = enquireStatus.enquireMissingFingers(EnquireStatus.TenFingers);
-    	  break;
+        targetFingers = enquireStatus.enquireMissingFingers(EnquireStatus.TenFingers);
+        break;
     }
     return targetFingers;
   }
 
   private void enrollFace(
       SubjectEnrollmentReference enrolRef, String subjectId) { // TODO Auto-generated method stub
+  }
+
+  protected boolean isEnrollBiographics() {
+    return enrollBiographics;
+  }
+
+  protected void setEnrollBiographics(boolean useBiographicOnQuery) {
+    this.enrollBiographics = useBiographicOnQuery;
   }
 }
