@@ -1,5 +1,6 @@
 package com.genkey.platform.test.framework;
 
+import com.genkey.platform.utils.ArrayIterator;
 import com.genkey.platform.utils.AssertUtils;
 import com.genkey.platform.utils.CollectionUtils;
 import com.genkey.platform.utils.Commons;
@@ -8,6 +9,7 @@ import java.io.Externalizable;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.junit.runner.JUnitCore;
@@ -85,6 +87,27 @@ public class GKTestCase4 {
     }
   }
 
+  public static void assertEqual(int [] array1, int [] array2) {
+	  AssertUtils.assertEqual(array1, array2);	  
+  }
+  
+  public static void assertContentEqual(int [] array1, int [] array2) {
+	  boolean status = checkContentEqual(array1, array2);
+	  assertTrue(status);
+  }
+
+  public static boolean checkContentEqual(int [] array1, int [] array2) {
+	  if (array1.length != array2.length) {
+		  return false;
+	  }
+	  Iterable<Integer> list1 = new ArrayIterator<>(array1);
+	  Iterable<Integer> list2 = new ArrayIterator<>(array2);
+	  List<Integer> intersect = CollectionUtils.intersection(list1, list2);
+	  return (intersect.size() == array1.length);
+  }
+  
+ 
+  
   public static void assertEqual(byte[] array1, byte[] array2) {
     AssertUtils.assertEqual(array1, array2);
   }
