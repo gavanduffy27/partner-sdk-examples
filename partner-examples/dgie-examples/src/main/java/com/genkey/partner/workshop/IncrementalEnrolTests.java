@@ -246,6 +246,20 @@ public class IncrementalEnrolTests extends BMSWorkshopExample {
 	   return response;	  
   }
 
+  public MatchEngineResponse insertIfNoDuplicates(String subjectId, EnrollmentStep step, boolean withBiographics) {
+	  SubjectEnrollmentReference enrollRef = acquireBiometrics(subjectId, step, EnquireStatus.UnknownStatus, true);
+	  
+	    GenkeyABISService abisService = this.getAbisService();
+
+	    if (!abisService.testAvailable()) {
+	      return null;
+	    }
+	  
+	   MatchEngineResponse response = abisService.insertIfNoDuplicates(enrollRef);	   	   
+	   return response;	  
+  }
+  
+  
   private int[] selectTargetFingers(EnquireStatus enquireStatus, EnrollmentStep step) {
     int[] targetFingers;
     if (enquireStatus == null) {
