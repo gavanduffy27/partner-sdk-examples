@@ -23,7 +23,8 @@ public class ExampleTestUtils {
 
   // Default code settings file to be used when OPT_CODE_DEFAULT=1
   static String CODE_SETTINGS_FILE = "./test/localTest.ini";
-  //static String CODE_SETTINGS_FILE = "./partnerExample.ini";
+
+  // static String CODE_SETTINGS_FILE = "./partnerExample.ini";
 
   public static void setSettingsFile(String fileName) {
     System.setProperty(OPT_SETTINGS, fileName);

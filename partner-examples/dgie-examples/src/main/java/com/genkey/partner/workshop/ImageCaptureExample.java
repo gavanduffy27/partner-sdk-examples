@@ -7,12 +7,10 @@ import com.genkey.abisclient.examples.utils.TestDataManager;
 import com.genkey.abisclient.service.ABISServiceModule;
 import com.genkey.abisclient.service.GenkeyABISService;
 import com.genkey.abisclient.service.MatchEngineResponse;
-import com.genkey.abisclient.service.VerifyResponse;
 import com.genkey.abisclient.transport.FingerEnrollmentReference;
 import com.genkey.abisclient.transport.SubjectEnrollmentReference;
 import com.genkey.partner.example.PartnerExample;
 import com.genkey.partner.utils.EnrollmentUtils;
-import com.genkey.platform.utils.FileUtils;
 
 public class ImageCaptureExample extends BMSWorkshopExample {
 
@@ -105,12 +103,11 @@ public class ImageCaptureExample extends BMSWorkshopExample {
         sampleIndex++;
       }
     }
-    
-    // Check if subject exists 
+
+    // Check if subject exists
     MatchEngineResponse queryResponse = abisService.querySubject(reference);
-    if (! queryResponse.hasMatchResults())  {
-    	MatchEngineResponse insertResponse = abisService.querySubject(reference);
+    if (!queryResponse.hasMatchResults()) {
+      MatchEngineResponse insertResponse = abisService.querySubject(reference);
     }
-    
   }
 }

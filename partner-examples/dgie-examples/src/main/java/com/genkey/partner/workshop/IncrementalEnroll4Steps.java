@@ -14,17 +14,13 @@ public class IncrementalEnroll4Steps extends IncrementalEnrolTests {
     PartnerExample test = new IncrementalEnroll4Steps(true);
     test.processCommandLine(args);
   }
-  
-  
-  public IncrementalEnroll4Steps() {
-	  
-  }
+
+  public IncrementalEnroll4Steps() {}
 
   public IncrementalEnroll4Steps(boolean useBiographic) {
-	  super(useBiographic);
+    super(useBiographic);
   }
-  
-  
+
   @Override
   protected void runAllExamples() {
     initialEnrollFace();

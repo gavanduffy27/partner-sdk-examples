@@ -20,31 +20,30 @@ public class TestAppTests extends BMSWorkshopExample {
   }
 
   public void segmentationTest() {
-	  TestDataManager.setFingerImagePath(4);
-	  String imageFile = TestDataManager.getImageFile(SegmentationFileName);
-	  if (! FileUtils.existsFile(imageFile)) {
-		  return;
-	  }
-	  String fName = FileUtils.baseName(imageFile);
-	  ImageData imageData = TestDataManager.loadImage(imageFile);
-	  //ImageContextSDK.setSwitch(GKSwitchParameter.AutoExtractReference, true);
-	  ImageContext context = new ImageContext(imageData, RightHand);
-	  int count = context.count();
-	  int [] detectedFingers=  context.getDetectedFingers();
-	  String exportFolder = FileUtils.expandConfigPath("test/exports/dgie");
-	  String exportFormat = ImageData.FORMAT_BMP;
-	  for(int ix=0; ix < context.count(); ix++) {
-		  ImageData segment = context.extractImageSegment(ix);
-		  int fingerId = detectedFingers[ix];
-		  String baseName = String.format("%s_%d_%d", fName, ix, fingerId);
-		  byte [] encoding = segment.asEncodedImage(exportFormat);
-		  String fileName = FileUtils.expandConfigFile(exportFolder, baseName, exportFormat);
-		  try { 
-			  FileUtils.byteArrayToFile(encoding, fileName);
-		  } catch (Exception e) {
-			  e.printStackTrace();
-		  }
-		  
-	  }
+    TestDataManager.setFingerImagePath(4);
+    String imageFile = TestDataManager.getImageFile(SegmentationFileName);
+    if (!FileUtils.existsFile(imageFile)) {
+      return;
+    }
+    String fName = FileUtils.baseName(imageFile);
+    ImageData imageData = TestDataManager.loadImage(imageFile);
+    // ImageContextSDK.setSwitch(GKSwitchParameter.AutoExtractReference, true);
+    ImageContext context = new ImageContext(imageData, RightHand);
+    int count = context.count();
+    int[] detectedFingers = context.getDetectedFingers();
+    String exportFolder = FileUtils.expandConfigPath("test/exports/dgie");
+    String exportFormat = ImageData.FORMAT_BMP;
+    for (int ix = 0; ix < context.count(); ix++) {
+      ImageData segment = context.extractImageSegment(ix);
+      int fingerId = detectedFingers[ix];
+      String baseName = String.format("%s_%d_%d", fName, ix, fingerId);
+      byte[] encoding = segment.asEncodedImage(exportFormat);
+      String fileName = FileUtils.expandConfigFile(exportFolder, baseName, exportFormat);
+      try {
+        FileUtils.byteArrayToFile(encoding, fileName);
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
   }
 }

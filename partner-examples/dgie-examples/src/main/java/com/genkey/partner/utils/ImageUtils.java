@@ -1,5 +1,6 @@
 package com.genkey.partner.utils;
 
+import com.genkey.abisclient.ImageData;
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
@@ -7,10 +8,7 @@ import java.awt.image.DataBufferByte;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
-
 import javax.imageio.ImageIO;
-
-import com.genkey.abisclient.ImageData;
 
 public class ImageUtils {
   public static ImageData rotateImageData(ImageData imageData, double theta) {

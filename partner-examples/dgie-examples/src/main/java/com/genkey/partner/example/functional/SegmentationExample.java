@@ -13,11 +13,7 @@ import com.genkey.partner.example.PartnerTestSuite;
 import com.genkey.partner.utils.ImageUtils;
 import com.genkey.platform.utils.FileUtils;
 import com.genkey.platform.utils.Profiler;
-
-import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 
 public class SegmentationExample extends PartnerExample {
 
@@ -196,10 +192,10 @@ public class SegmentationExample extends PartnerExample {
     ts.reset();
     ImageData rotatedImage2 = ImageUtils.rotateImage180(rotatedImage180);
     double cost2 = ts.getDurationMillis();
-    
-    double cost = (cost1+cost2)/2;
+
+    double cost = (cost1 + cost2) / 2;
     printResult("Cost", cost);
-    
+
     boolean status = ImageUtils.checkEqual(imageData, rotatedImage2);
     if (!status) {
       println("Not perfect buddy");
@@ -239,7 +235,7 @@ public class SegmentationExample extends PartnerExample {
     ts.reset();
     imageData.rotateImage180();
     double cost2 = ts.getDurationMillis();
-    double cost = (cost1 + cost2)/2;
+    double cost = (cost1 + cost2) / 2;
     printResult("Cost2", cost);
     exportImage(imageData, EXPORT_PATH, baseNameR, ImageData.FORMAT_BMP);
 

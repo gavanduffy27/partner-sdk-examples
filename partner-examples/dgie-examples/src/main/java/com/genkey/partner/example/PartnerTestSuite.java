@@ -15,78 +15,79 @@ import com.genkey.platform.utils.FileUtils;
 
 public class PartnerTestSuite extends ExampleSuite {
 
-	public static boolean flgInit = false;
+  public static boolean flgInit = false;
 
-	public static boolean flgClientInit = false;
+  public static boolean flgClientInit = false;
 
-	// Define a settings file
-	static String SETTINGS_FILE="./test/remoteTest.ini";
-	//static String SETTINGS_FILE = "./test/localTest.ini";
+  // Define a settings file
+  static String SETTINGS_FILE = "./test/remoteTest.ini";
 
-	// static PropertyMap prop
+  // static String SETTINGS_FILE = "./test/localTest.ini";
 
-	public static void init() {
-		if (!flgInit) {
-			try {
-				// Comment out this line to use other mechanisms
-				// ExampleTestUtils.setSettingsFile(SETTINGS_FILE);
+  // static PropertyMap prop
 
-				// Generic method for establishing settings
-				ExampleTestUtils.setCodeDefaultSettings();
-				ExampleTestUtils.loadDefaultSettings();
+  public static void init() {
+    if (!flgInit) {
+      try {
+        // Comment out this line to use other mechanisms
+        // ExampleTestUtils.setSettingsFile(SETTINGS_FILE);
 
-				String ServiceHost = PartnerExample.getPrimaryHost();
-				int ServicePort = PartnerExample.getServicePort();
-				String DomainName = PartnerExample.getPartnerDomainName();
-				String LegacyServiceHost = PartnerExample.getLegacyHost();
-				String DrServer = PartnerExample.getSecondaryHost();
+        // Generic method for establishing settings
+        ExampleTestUtils.setCodeDefaultSettings();
+        ExampleTestUtils.loadDefaultSettings();
 
-				// ABISClientLibrary.initializeWithSettings(SettingsFile);
-				RestServices.getInstance().setABISPort(0);
-				ABISClientLibrary.initializeDefault();
-				DGIEServiceModule.initCoreServices(ServiceHost, ServicePort, DomainName);
-				DGIEServiceModule.initLegacyService(LegacyServiceHost, ServicePort);
-				DGIEServiceModule.setFailoverServer(DrServer);
-				// Performs stand-alone check on startup
-				RestServices.getInstance().checkFailover(true);
+        String ServiceHost = PartnerExample.getPrimaryHost();
+        int ServicePort = PartnerExample.getServicePort();
+        String DomainName = PartnerExample.getPartnerDomainName();
+        String LegacyServiceHost = PartnerExample.getLegacyHost();
+        String DrServer = PartnerExample.getSecondaryHost();
 
-				String cfgPath = ImageContextSDK.getConfigurationPath();
-				FileUtils.setConfigurationPath(cfgPath);
-			} catch (Exception e) {
-				handleException(e);
-			}
-			flgInit = true;
-		}
-	}
+        // ABISClientLibrary.initializeWithSettings(SettingsFile);
+        RestServices.getInstance().setABISPort(0);
+        ABISClientLibrary.initializeDefault();
+        DGIEServiceModule.initCoreServices(ServiceHost, ServicePort, DomainName);
+        DGIEServiceModule.initLegacyService(LegacyServiceHost, ServicePort);
+        DGIEServiceModule.setFailoverServer(DrServer);
+        // Performs stand-alone check on startup
+        RestServices.getInstance().checkFailover(true);
 
-	public static void initClient() {
+        String cfgPath = ImageContextSDK.getConfigurationPath();
+        FileUtils.setConfigurationPath(cfgPath);
+      } catch (Exception e) {
+        handleException(e);
+      }
+      flgInit = true;
+    }
+  }
 
-		if (!flgClientInit) {
-			try {
-				ABISClientLibrary.initializeDefault();
-				String cfgPath = ImageContextSDK.getConfigurationPath();
-				FileUtils.setConfigurationPath(cfgPath);
+  public static void initClient() {
 
-			} catch (Exception e) {
-				handleException(e);
-			}
-		}
-	}
+    if (!flgClientInit) {
+      try {
+        ABISClientLibrary.initializeDefault();
+        String cfgPath = ImageContextSDK.getConfigurationPath();
+        FileUtils.setConfigurationPath(cfgPath);
 
-	@Override
-	protected void initExampleSuite() {
-		init();
-	}
+      } catch (Exception e) {
+        handleException(e);
+      }
+    }
+  }
 
-	public static GenkeyABISService getABISService() {
-		return ABISServiceModule.getABISService();
-	}
+  @Override
+  protected void initExampleSuite() {
+    init();
+  }
 
-	public static BiographicService getBiographicService() {
-		return BiographicServiceModule.getBiographicService();
-	}
+  public static GenkeyABISService getABISService() {
+    return ABISServiceModule.getABISService();
+  }
 
-	public static LegacyMatchingService getLegacyService() {
-		return DGIEServiceModule.getLegacyService();
-	}
+  public static BiographicService getBiographicService() {
+    return BiographicServiceModule.getBiographicService();
+  }
+
+  public static LegacyMatchingService getLegacyService() {
+    return DGIEServiceModule.getLegacyService();
+  }
 }

@@ -51,15 +51,15 @@ public class TraumaProfileExample extends IncrementalEnrolTests {
     currentStatus = abisService.setFingerTraumaProfile(subjectID, missingFingers);
     assertContentEqual(currentStatus.getTraumaFingers(), missingFingers);
 
-    // Set qualit profile to left thumb - 
-    int [] leftThumb = {6};    
-    currentStatus = abisService.setFingerQualityProfile(subjectID, leftThumb);    
+    // Set qualit profile to left thumb -
+    int[] leftThumb = {6};
+    currentStatus = abisService.setFingerQualityProfile(subjectID, leftThumb);
     assertContentEqual(currentStatus.getLowQualityFingers(), leftThumb);
 
     // Set temporary trauma profile to right thumb
-    int [] rightThumb = {1};
-    currentStatus = abisService.setFingerTemporaryProfile(subjectID, rightThumb);    
-    assertContentEqual(currentStatus.getTemporaryTraumaFingers(), rightThumb);    
+    int[] rightThumb = {1};
+    currentStatus = abisService.setFingerTemporaryProfile(subjectID, rightThumb);
+    assertContentEqual(currentStatus.getTemporaryTraumaFingers(), rightThumb);
 
     // how the new status
     currentStatus = abisService.enquireSubject(subjectID);
@@ -80,7 +80,7 @@ public class TraumaProfileExample extends IncrementalEnrolTests {
 
     int[] qualityProfile = currentStatus.getLowQualityFingers();
     int[] traumaProfile = currentStatus.getTraumaFingers();
-    int [] tempProfile = currentStatus.getTemporaryTraumaFingers();
+    int[] tempProfile = currentStatus.getTemporaryTraumaFingers();
 
     printResult("Quality profile", qualityProfile);
     printResult("Trauma profile", traumaProfile);
@@ -115,12 +115,12 @@ public class TraumaProfileExample extends IncrementalEnrolTests {
     assertContentEqual(missingQFingers, missingQFingers2);
 
     printResult("Missing fingers including low quality ", missingQFingers);
-    
+
     // Missing fingers including temporary trauma fingers
-    int[] missingTFingers = currentStatus.enquireMissingFingers(EnquireStatus.TenFingers, false, true, false);
+    int[] missingTFingers =
+        currentStatus.enquireMissingFingers(EnquireStatus.TenFingers, false, true, false);
     printResult("Missing fingers including temporary trauma ", missingTFingers);
 
-    
     // Missing fingers without any exceptions for quality or trauma
     int[] allMissingFingers =
         currentStatus.enquireMissingFingers(EnquireStatus.TenFingers, true, true, true);

@@ -33,7 +33,7 @@ public class IncrementalEnrolScenario extends IncrementalEnrolTests {
 
   protected void runAllExamples() {
     enrolFaceFingers();
- //   enrolFingersFace();
+    //   enrolFingersFace();
   }
 
   public void enrolFingersFace() {
@@ -68,17 +68,15 @@ public class IncrementalEnrolScenario extends IncrementalEnrolTests {
 
     GenkeyABISService abisService = ABISServiceModule.getABISService();
     BiographicService biographicService = DGIEServiceModule.getBiographicService();
-    
+
     EnquireStatus status = abisService.enquireSubject(testSubject);
     if (status.existsSubject()) {
       processFlow("Handle existing subject");
       return;
     }
-   
-    
+
     BiographicProfileRecord record =
         EnrollmentUtils.getBiographicRecord(TestSubjectID, "John", "Brown");
-
 
     SubjectEnrollmentReference enrollRef = new SubjectEnrollmentReference(testSubject);
     EnrollmentUtils.enrollFacePortrait(enrollRef, 1);

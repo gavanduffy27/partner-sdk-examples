@@ -29,17 +29,17 @@ public abstract class PartnerExample extends ExampleModule {
 
   protected static String LocalServiceHost = "abis.production"; // 10.11.11.28";
   protected static String LocalServiceHostDR = "abis.dr"; // 10.11.11.28";
-  
+
   static boolean DeletesPending = false;
 
   static boolean FaceMatchEnabled = true;
 
   static boolean enforcePendingDelete = false;
 
-  //protected static boolean UseRemote = false;
+  // protected static boolean UseRemote = false;
 
   protected static boolean FlgRemote = false;
-  
+
   protected static boolean UseDR = false;
 
   public static String LocalPrimaryHost = UseDR ? LocalServiceHostDR : LocalServiceHost;
@@ -49,8 +49,8 @@ public abstract class PartnerExample extends ExampleModule {
   private static final int ServicePortRemote = 8091;
   private static final String DomainName = "EnrollmentSDK";
   private static final String TestDomain = "test";
-private static final String RemotePrimaryHost = "genkey.abis.remote";
-  
+  private static final String RemotePrimaryHost = "genkey.abis.remote";
+
   public static int[] FourFingers = Commons.generateRangeV(2, 3, 7, 8);
 
   public static int[] SixFingers = Commons.generateRangeV(1, 2, 3, 6, 7, 8);
@@ -70,9 +70,9 @@ private static final String RemotePrimaryHost = "genkey.abis.remote";
   public static String OPT_HOSTNAME_DR = "abis.partner.hostName.dr";
   public static String OPT_PORT = "abis.partner.port";
   public static String OPT_DOMAIN_NAME = "abis.partner.domainName";
-  public static String OPT_USE_REMOTE= "abis.partner.remote";
-  public static String OPT_FACE_ENABLED= "abis.partner.faceEnabled";
-  
+  public static String OPT_USE_REMOTE = "abis.partner.remote";
+  public static String OPT_FACE_ENABLED = "abis.partner.faceEnabled";
+
   public static void initImageDirectory() {
     TestDataManager.setImageRootPath(PartnerImagePath);
     TestDataManager.setImageSet(ImageSet100);
@@ -99,9 +99,9 @@ private static final String RemotePrimaryHost = "genkey.abis.remote";
   }
 
   public static boolean isUseRemote() {
-	  return ExampleTestUtils.getPropertyBoolean(OPT_USE_REMOTE, FlgRemote);
+    return ExampleTestUtils.getPropertyBoolean(OPT_USE_REMOTE, FlgRemote);
   }
-  
+
   @BeforeClass
   public static void checkTestsuiteInit() {
     PartnerTestSuite.init();

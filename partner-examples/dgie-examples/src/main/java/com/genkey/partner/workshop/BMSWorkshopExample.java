@@ -1,27 +1,20 @@
 package com.genkey.partner.workshop;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.stream.Collectors;
-
 import com.genkey.abisclient.ImageBlob;
 import com.genkey.abisclient.examples.utils.ExampleTestUtils;
 import com.genkey.abisclient.service.ABISServiceModule;
 import com.genkey.abisclient.service.GenkeyABISService;
 import com.genkey.abisclient.service.MatchEngineResponse;
-import com.genkey.abisclient.service.UpdateResponse;
 import com.genkey.abisclient.service.params.EnquireStatus;
 import com.genkey.partner.biographic.BiographicService;
 import com.genkey.partner.dgie.DGIEServiceModule;
 import com.genkey.partner.dgie.LegacyMatchingService;
 import com.genkey.partner.example.PartnerExample;
-import com.genkey.platform.utils.ArrayIterator;
 import com.genkey.platform.utils.CollectionUtils;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public abstract class BMSWorkshopExample extends PartnerExample {
 
@@ -115,6 +108,4 @@ public abstract class BMSWorkshopExample extends PartnerExample {
   private static void collectionAdd(Collection<Integer> c, int[] list) {
     for (int value : list) c.add(value);
   }
-
- 
 }

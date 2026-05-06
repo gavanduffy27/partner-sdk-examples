@@ -167,8 +167,9 @@ public class IncrementalEnrolTests extends BMSWorkshopExample {
 
     boolean isInsert = !exists;
 
-    SubjectEnrollmentReference enrolRef  = this.acquireBiometrics(subjectId, step, enquireStatus, this.isEnrollBiographics());
-    
+    SubjectEnrollmentReference enrolRef =
+        this.acquireBiometrics(subjectId, step, enquireStatus, this.isEnrollBiographics());
+
     /*
     SubjectEnrollmentReference enrolRef = new SubjectEnrollmentReference(subjectId);
 
@@ -202,25 +203,28 @@ public class IncrementalEnrolTests extends BMSWorkshopExample {
   }
 
   protected SubjectEnrollmentReference acquireBiometrics(String subjectId, EnrollmentStep step) {
-	  return acquireBiometrics(subjectId, step, EnquireStatus.UnknownStatus);
+    return acquireBiometrics(subjectId, step, EnquireStatus.UnknownStatus);
   }
-  
-  protected SubjectEnrollmentReference acquireBiometrics(String subjectId, EnrollmentStep step, EnquireStatus status) {
-	  return acquireBiometrics(subjectId, step, status, this.isEnrollBiographics());
+
+  protected SubjectEnrollmentReference acquireBiometrics(
+      String subjectId, EnrollmentStep step, EnquireStatus status) {
+    return acquireBiometrics(subjectId, step, status, this.isEnrollBiographics());
   }
-  
-  protected SubjectEnrollmentReference acquireBiometrics(String subjectId, EnrollmentStep step, EnquireStatus status, boolean withBiographics) {
-	  SubjectEnrollmentReference result = new SubjectEnrollmentReference(subjectId);
-	  int subjectNumber = Integer.valueOf(subjectId);
-	  acquireBiometrics(result, subjectNumber, step, status, withBiographics);	  
-	  return result;
+
+  protected SubjectEnrollmentReference acquireBiometrics(
+      String subjectId, EnrollmentStep step, EnquireStatus status, boolean withBiographics) {
+    SubjectEnrollmentReference result = new SubjectEnrollmentReference(subjectId);
+    int subjectNumber = Integer.valueOf(subjectId);
+    acquireBiometrics(result, subjectNumber, step, status, withBiographics);
+    return result;
   }
-  
+
   protected void acquireBiometrics(
       SubjectEnrollmentReference enrolRef,
       int subjectNumber,
       EnrollmentStep step,
-      EnquireStatus enquireStatus, boolean withBiographics) {
+      EnquireStatus enquireStatus,
+      boolean withBiographics) {
     if (step == EnrollmentStep.Face) {
       EnrollmentUtils.enrollFacePortrait(enrolRef, 1);
     } else {
@@ -229,59 +233,65 @@ public class IncrementalEnrolTests extends BMSWorkshopExample {
       EnrollmentUtils.enrollFingerPrintSubject(enrolRef, subjectNumber, 1, 1);
     }
     if (withBiographics) {
-    	EnrollmentUtils.enrollBiographics(enrolRef, TestSubjectID);
+      EnrollmentUtils.enrollBiographics(enrolRef, TestSubjectID);
     }
   }
 
-  public MatchEngineResponse performQuery(String subjectId, EnrollmentStep step, boolean withBiographics) {
-	  SubjectEnrollmentReference enrollRef = acquireBiometrics(subjectId, step, EnquireStatus.UnknownStatus, true);
-	  
-	    GenkeyABISService abisService = this.getAbisService();
+  public MatchEngineResponse performQuery(
+      String subjectId, EnrollmentStep step, boolean withBiographics) {
+    SubjectEnrollmentReference enrollRef =
+        acquireBiometrics(subjectId, step, EnquireStatus.UnknownStatus, true);
 
-	    if (!abisService.testAvailable()) {
-	      return null;
-	    }
-	  
-	   MatchEngineResponse response = abisService.querySubject(enrollRef);	   	   
-	   return response;	  
+    GenkeyABISService abisService = this.getAbisService();
+
+    if (!abisService.testAvailable()) {
+      return null;
+    }
+
+    MatchEngineResponse response = abisService.querySubject(enrollRef);
+    return response;
   }
 
-  public MatchEngineResponse insertIfNoDuplicates(String subjectId, EnrollmentStep step, boolean withBiographics) {
-	  SubjectEnrollmentReference enrollRef = acquireBiometrics(subjectId, step, EnquireStatus.UnknownStatus, true);
-	  
-	    GenkeyABISService abisService = this.getAbisService();
+  public MatchEngineResponse insertIfNoDuplicates(
+      String subjectId, EnrollmentStep step, boolean withBiographics) {
+    SubjectEnrollmentReference enrollRef =
+        acquireBiometrics(subjectId, step, EnquireStatus.UnknownStatus, true);
 
-	    if (!abisService.testAvailable()) {
-	      return null;
-	    }
-	  
-	   MatchEngineResponse response = abisService.insertIfNoDuplicates(enrollRef);	   	   
-	   return response;	  
+    GenkeyABISService abisService = this.getAbisService();
+
+    if (!abisService.testAvailable()) {
+      return null;
+    }
+
+    MatchEngineResponse response = abisService.insertIfNoDuplicates(enrollRef);
+    return response;
   }
 
-  public MatchEngineResponse performUpdate(String subjectId, EnrollmentStep step, boolean withBiographics) {
-	  SubjectEnrollmentReference enrollRef = acquireBiometrics(subjectId, step, EnquireStatus.UnknownStatus, true);
-	  
-	    GenkeyABISService abisService = this.getAbisService();
+  public MatchEngineResponse performUpdate(
+      String subjectId, EnrollmentStep step, boolean withBiographics) {
+    SubjectEnrollmentReference enrollRef =
+        acquireBiometrics(subjectId, step, EnquireStatus.UnknownStatus, true);
 
-	    if (!abisService.testAvailable()) {
-	      return null;
-	    }
-	  
-	   EnquireStatus status = abisService.enquireSubject(subjectId);
-	   
-	   MatchEngineResponse result; 
-	   if (status.existsSubject()) {
-		  UpdateResponse updateResponse =  abisService.updateSubject(enrollRef);
-		  result = updateResponse;
-	   } else {
-		   MatchEngineResponse response = abisService.insertSubject(enrollRef);	   	   
-		   result = response;
-	   }
-	   
-	   return result;	  
+    GenkeyABISService abisService = this.getAbisService();
+
+    if (!abisService.testAvailable()) {
+      return null;
+    }
+
+    EnquireStatus status = abisService.enquireSubject(subjectId);
+
+    MatchEngineResponse result;
+    if (status.existsSubject()) {
+      UpdateResponse updateResponse = abisService.updateSubject(enrollRef);
+      result = updateResponse;
+    } else {
+      MatchEngineResponse response = abisService.insertSubject(enrollRef);
+      result = response;
+    }
+
+    return result;
   }
-  
+
   private int[] selectTargetFingers(EnquireStatus enquireStatus, EnrollmentStep step) {
     int[] targetFingers;
     if (enquireStatus == null) {
