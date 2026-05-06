@@ -10,16 +10,30 @@ public class QueryWithBiographicTest extends IncrementalEnrolTests {
   @Override
   protected void runAllExamples() {
     queryWithBiographics();
-    insertIfNoDuplicates();
+//    insertIfNoDuplicates();
   }
 
   public void insertIfNoDuplicates() { // TODO Auto-generated method stub
-//    super.insertIfNoDuplicates(TestSubjectID, EnrollmentStep.Face, true);
-    super.insertIfNoDuplicates(TestSubjectID2, EnrollmentStep.Face, true);
+    super.insertIfNoDuplicates(TestSubjectID, EnrollmentStep.Face, true);
+//    super.insertIfNoDuplicates(TestSubjectID2, EnrollmentStep.Face, true);
   }
 
   public void queryWithBiographics() {
-//    super.performQuery(TestSubjectID, EnrollmentStep.Face, true);
-    super.performQuery(TestSubjectID2, EnrollmentStep.Face, true);
+    super.performQuery(TestSubjectID, EnrollmentStep.Face, true);
+//    super.performQuery(TestSubjectID2, EnrollmentStep.Face, true);
   }
+  
+  public void updateBiographicTest() {
+	 super.performUpdate(TestSubjectID, EnrollmentStep.RightHand, true);
+  }
+
+  public void updateBiographicTest2() {
+	 super.performUpdate(TestSubjectID, EnrollmentStep.EnrollmentHint, true);
+  }
+ 
+  public void insertBiographicTest() {
+	 super.performUpdate(TestSubjectID, EnrollmentStep.Face, true);
+  }
+  
+
 }

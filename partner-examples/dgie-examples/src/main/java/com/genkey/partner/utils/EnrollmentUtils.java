@@ -279,6 +279,8 @@ public class EnrollmentUtils {
 		record.setLastName(lastName);
 		record.setDateOfBirth(dob);
 		record.setGenderType(gender);
+		// Used for validation of update tests 
+		record.setAttribute("timeStamp", System.currentTimeMillis());
 		return record;
 	}
 

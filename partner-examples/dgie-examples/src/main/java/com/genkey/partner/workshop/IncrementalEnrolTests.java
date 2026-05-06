@@ -258,7 +258,29 @@ public class IncrementalEnrolTests extends BMSWorkshopExample {
 	   MatchEngineResponse response = abisService.insertIfNoDuplicates(enrollRef);	   	   
 	   return response;	  
   }
-  
+
+  public MatchEngineResponse performUpdate(String subjectId, EnrollmentStep step, boolean withBiographics) {
+	  SubjectEnrollmentReference enrollRef = acquireBiometrics(subjectId, step, EnquireStatus.UnknownStatus, true);
+	  
+	    GenkeyABISService abisService = this.getAbisService();
+
+	    if (!abisService.testAvailable()) {
+	      return null;
+	    }
+	  
+	   EnquireStatus status = abisService.enquireSubject(subjectId);
+	   
+	   MatchEngineResponse result; 
+	   if (status.existsSubject()) {
+		  UpdateResponse updateResponse =  abisService.updateSubject(enrollRef);
+		  result = updateResponse;
+	   } else {
+		   MatchEngineResponse response = abisService.insertSubject(enrollRef);	   	   
+		   result = response;
+	   }
+	   
+	   return result;	  
+  }
   
   private int[] selectTargetFingers(EnquireStatus enquireStatus, EnrollmentStep step) {
     int[] targetFingers;
