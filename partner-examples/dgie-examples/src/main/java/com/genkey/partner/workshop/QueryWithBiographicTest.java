@@ -12,9 +12,13 @@ public class QueryWithBiographicTest extends IncrementalEnrolTests {
     queryWithBiographics();
     //    insertIfNoDuplicates();
   }
+  
+  public void enrollTestSubject() {
+	  insertIfNoDuplicates(TestSubjectID, EnrollmentStep.Complete, true);
+  }
 
   public void insertIfNoDuplicates() { // TODO Auto-generated method stub
-    super.insertIfNoDuplicates(TestSubjectID, EnrollmentStep.Face, true);
+    super.insertIfNoDuplicates(TestSubjectID2, EnrollmentStep.Face, true);
     //    super.insertIfNoDuplicates(TestSubjectID2, EnrollmentStep.Face, true);
   }
 

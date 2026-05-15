@@ -11,9 +11,6 @@ import com.genkey.partner.utils.EnrollmentUtils;
 
 public class IncrementalEnrolTests extends BMSWorkshopExample {
 
-  static final String TestSubjectID2 = "2";
-  static String TestSubjectID = "1";
-
   boolean enrollBiographics = false;
 
   // Guidance update on face-quality to be addressed later
@@ -225,7 +222,12 @@ public class IncrementalEnrolTests extends BMSWorkshopExample {
       EnrollmentStep step,
       EnquireStatus enquireStatus,
       boolean withBiographics) {
-    if (step == EnrollmentStep.Face) {
+    if (step == EnrollmentStep.Complete) {
+      EnrollmentUtils.enrollFacePortrait(enrolRef, 1);
+      int[] targetFingers = selectTargetFingers(enquireStatus, step);
+      enrolRef.setTargetFingers(targetFingers);
+      EnrollmentUtils.enrollFingerPrintSubject(enrolRef, subjectNumber, 1, 1);
+    } else if (step == EnrollmentStep.Face) {
       EnrollmentUtils.enrollFacePortrait(enrolRef, 1);
     } else {
       int[] targetFingers = selectTargetFingers(enquireStatus, step);
@@ -254,16 +256,29 @@ public class IncrementalEnrolTests extends BMSWorkshopExample {
 
   public MatchEngineResponse insertIfNoDuplicates(
       String subjectId, EnrollmentStep step, boolean withBiographics) {
-    SubjectEnrollmentReference enrollRef =
-        acquireBiometrics(subjectId, step, EnquireStatus.UnknownStatus, true);
 
     GenkeyABISService abisService = this.getAbisService();
 
     if (!abisService.testAvailable()) {
-      return null;
+        return null;
+      }
+
+    EnquireStatus status = abisService.enquireSubject(subjectId);
+    
+    if (status.isAfisPresent()) {
+    	return null;
     }
 
-    MatchEngineResponse response = abisService.insertIfNoDuplicates(enrollRef);
+    SubjectEnrollmentReference enrollRef =
+        acquireBiometrics(subjectId, step, EnquireStatus.UnknownStatus, true);
+
+
+    MatchEngineResponse response;
+    if (status.existsSubject() && !status.isAfisPresent()) {
+      response = abisService.updateSubject(enrollRef);
+    } else {
+      response = abisService.insertIfNoDuplicates(enrollRef);
+    }
     return response;
   }
 

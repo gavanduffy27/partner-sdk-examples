@@ -22,6 +22,9 @@ public abstract class BMSWorkshopExample extends PartnerExample {
   BiographicService biographicService;
   LegacyMatchingService legacyService;
 
+  static final String TestSubjectID2 = "2";
+  static String TestSubjectID = "1";
+
   @Override
   protected void setUp() {
     ExampleTestUtils.setCodeDefaultSettings();
